@@ -5,7 +5,7 @@ import { WorkspacePage } from '@/features/workspace-page'
 export const Route = createFileRoute('/_authenticated/calenders/')({
   component: () => (
     <WorkspacePage
-      title='Calenders'
+      title='Calendars'
       description='Keep meetings, deadlines, and team events in one place.'
       icon={CalendarDays}
       summary={[
