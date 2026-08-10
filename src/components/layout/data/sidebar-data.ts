@@ -56,7 +56,7 @@ export const sidebarData: SidebarData = {
           icon: FileText,
         },
         {
-          title: 'Calenders',
+          title: 'Calendars',
           url: '/calenders',
           icon: CalendarDays,
         },
