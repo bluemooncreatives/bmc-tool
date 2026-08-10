@@ -7,11 +7,11 @@ import { cookies } from 'next/headers'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Shadcn Admin',
-    template: '%s | Shadcn Admin',
+    default: 'BMC Tool',
+    template: '%s | BMC Tool',
   },
   description:
-    'A production-ready admin dashboard built with Next.js and shadcn/ui.',
+    'The internal operations workspace for Blue Moon Creatives.',
   icons: {
     icon: [
       {
