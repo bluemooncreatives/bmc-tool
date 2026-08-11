@@ -165,8 +165,8 @@ export function PermissionManager() {
         <ProfileDropdown />
       </Header>
 
-      <Main className='flex flex-1 flex-col gap-5'>
-        <div>
+      <Main className='flex min-w-0 flex-1 flex-col gap-5'>
+        <div className='min-w-0'>
           <div className='flex items-center gap-2'>
             <ShieldCheck className='size-7 text-primary' />
             <h2 className='text-2xl font-bold tracking-tight'>
@@ -182,7 +182,7 @@ export function PermissionManager() {
         {error && (
           <div
             role='alert'
-            className='flex items-center justify-between gap-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive'
+            className='flex flex-col items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between'
           >
             <span>{error}</span>
             <Button
@@ -195,8 +195,8 @@ export function PermissionManager() {
           </div>
         )}
 
-        <div className='grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(260px,0.75fr)_minmax(0,2fr)]'>
-          <Card className='min-h-96'>
+        <div className='grid min-h-0 min-w-0 flex-1 items-start gap-5 @5xl/content:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]'>
+          <Card className='min-h-80 min-w-0 overflow-hidden'>
             <CardHeader className='gap-3'>
               <CardTitle className='text-base'>Users</CardTitle>
               <div className='relative'>
@@ -210,7 +210,7 @@ export function PermissionManager() {
                 />
               </div>
             </CardHeader>
-            <CardContent className='grid max-h-[58vh] gap-2 overflow-y-auto'>
+            <CardContent className='grid max-h-[58vh] min-w-0 grid-cols-[minmax(0,1fr)] gap-2 overflow-x-hidden overflow-y-auto'>
               {isLoading &&
                 Array.from({ length: 5 }, (_, index) => (
                   <Skeleton key={index} className='h-16 w-full' />
@@ -225,8 +225,9 @@ export function PermissionManager() {
                   key={user.id}
                   type='button'
                   onClick={() => setSelectedId(user.id)}
+                  disabled={isSaving}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors hover:bg-muted',
+                    'flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-md border p-3 text-left transition-colors hover:bg-muted disabled:cursor-wait disabled:opacity-70',
                     selectedId === user.id && 'border-primary bg-primary/5'
                   )}
                 >
@@ -247,6 +248,7 @@ export function PermissionManager() {
                   </span>
                   <Badge
                     variant={user.status === 'active' ? 'default' : 'secondary'}
+                    className='max-w-20 shrink-0 truncate'
                   >
                     {user.status}
                   </Badge>
@@ -255,24 +257,25 @@ export function PermissionManager() {
             </CardContent>
           </Card>
 
-          <Card className='min-h-96'>
+          <Card className='@container/permissions min-h-96 min-w-0 overflow-hidden'>
             {!selected ? (
               <CardContent className='flex h-full min-h-96 items-center justify-center text-sm text-muted-foreground'>
                 Select a user to manage module access.
               </CardContent>
             ) : (
               <>
-                <CardHeader className='flex-row items-start justify-between gap-4'>
-                  <div>
-                    <CardTitle className='text-lg'>
+                <CardHeader className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+                  <div className='min-w-0 flex-1'>
+                    <CardTitle className='text-lg break-words'>
                       {displayName(selected)}
                     </CardTitle>
-                    <p className='mt-1 text-sm text-muted-foreground'>
+                    <p className='mt-1 text-sm break-all text-muted-foreground'>
                       {selected.email}
                     </p>
                   </div>
                   <Badge
                     variant={selected.isSystemOwner ? 'default' : 'outline'}
+                    className='shrink-0'
                   >
                     {selected.isSystemOwner ? 'Super Admin' : 'User'}
                   </Badge>
@@ -284,30 +287,32 @@ export function PermissionManager() {
                       permissions cannot be reduced or delegated.
                     </div>
                   ) : (
-                    <div className='flex flex-wrap gap-2'>
-                      <Button
-                        type='button'
-                        size='sm'
-                        variant='outline'
-                        onClick={() => setDraft([...MODULE_KEYS])}
-                      >
-                        Select all
-                      </Button>
-                      <Button
-                        type='button'
-                        size='sm'
-                        variant='outline'
-                        onClick={() => setDraft([])}
-                      >
-                        Clear all
-                      </Button>
-                      <span className='ms-auto self-center text-xs text-muted-foreground'>
+                    <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
+                      <div className='flex flex-wrap gap-2'>
+                        <Button
+                          type='button'
+                          size='sm'
+                          variant='outline'
+                          onClick={() => setDraft([...MODULE_KEYS])}
+                        >
+                          Select all
+                        </Button>
+                        <Button
+                          type='button'
+                          size='sm'
+                          variant='outline'
+                          onClick={() => setDraft([])}
+                        >
+                          Clear all
+                        </Button>
+                      </div>
+                      <span className='text-xs text-muted-foreground sm:ms-auto sm:text-end'>
                         {draft.length} of {MODULE_KEYS.length} modules selected
                       </span>
                     </div>
                   )}
 
-                  <div className='grid gap-3 sm:grid-cols-2'>
+                  <div className='grid min-w-0 gap-3 @3xl/permissions:grid-cols-2'>
                     {MODULE_DEFINITIONS.map((module) => {
                       const checked =
                         selected.isSystemOwner || draft.includes(module.key)
@@ -316,7 +321,7 @@ export function PermissionManager() {
                           key={module.key}
                           htmlFor={`permission-${module.key}`}
                           className={cn(
-                            'flex cursor-pointer items-start gap-3 rounded-md border p-4 transition-colors',
+                            'flex min-w-0 cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors sm:p-4',
                             checked && 'border-primary/50 bg-primary/5',
                             selected.isSystemOwner && 'cursor-not-allowed'
                           )}
@@ -329,8 +334,8 @@ export function PermissionManager() {
                               togglePermission(module.key, value === true)
                             }
                           />
-                          <span className='min-w-0'>
-                            <span className='flex items-center gap-1.5 font-medium'>
+                          <span className='min-w-0 flex-1'>
+                            <span className='flex min-w-0 items-center gap-1.5 font-medium'>
                               {module.title}
                               {checked && (
                                 <Check className='size-3.5 text-primary' />
@@ -346,12 +351,13 @@ export function PermissionManager() {
                   </div>
 
                   {!selected.isSystemOwner && (
-                    <div className='flex justify-end gap-2 border-t pt-4'>
+                    <div className='flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end'>
                       <Button
                         type='button'
                         variant='outline'
                         disabled={!isDirty || isSaving}
                         onClick={() => setDraft(selected.modulePermissions)}
+                        className='w-full sm:w-auto'
                       >
                         Discard
                       </Button>
@@ -359,6 +365,7 @@ export function PermissionManager() {
                         type='button'
                         disabled={!isDirty || isSaving}
                         onClick={() => void savePermissions()}
+                        className='w-full sm:w-auto'
                       >
                         {isSaving && <Loader2 className='animate-spin' />}
                         Save access
