@@ -65,6 +65,28 @@ OTP values are not stored directly: only keyed hashes are persisted. Codes are
 single-use, expire after 10 minutes, allow five attempts, have a 60-second
 resend cooldown, and are limited to five sends per email and purpose per hour.
 
+## Roles and module permissions
+
+The application currently has exactly two account types:
+
+- **Super Admin** — reserved for the configured owner email. The owner always
+  has every module, must use email MFA, and cannot be demoted or edited through
+  the permission API.
+- **User** — starts with no module access. The Super Admin grants individual
+  sidebar modules from **Administration → Permission Manager**.
+
+Permission grants are stored as a validated allowlist on each MongoDB user.
+They filter the sidebar, command menu, profile/settings links, and nested
+settings navigation. The authenticated route guard reloads the current user
+from the server and rejects direct URLs with a 403 when the module is not
+granted. Saving a permission change increments the target user's token version,
+immediately invalidating their existing access and refresh tokens, and records
+the before/after change in `permission_audit_logs`.
+
+Server APIs that expose module data must call `requireModulePermission` from
+`src/server/authorization.ts`; client-side navigation checks are an additional
+UX boundary, not a substitute for server authorization.
+
 ## Quality checks
 
 ```bash

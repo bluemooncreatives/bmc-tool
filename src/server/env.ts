@@ -27,7 +27,11 @@ export function getMongoUri(): string {
 }
 
 export function getJwtSecret(): Uint8Array {
-  return new TextEncoder().encode(required('JWT_SECRET'))
+  const secret = new TextEncoder().encode(required('JWT_SECRET'))
+  if (secret.byteLength < 32) {
+    throw new Error('JWT_SECRET must be at least 32 bytes long.')
+  }
+  return secret
 }
 
 export const isProduction = process.env.NODE_ENV === 'production'

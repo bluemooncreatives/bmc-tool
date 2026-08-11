@@ -85,12 +85,16 @@ export function PermissionManager() {
   }, [])
 
   useEffect(() => {
+    // Initial server synchronization; loadUsers performs updates after fetch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadUsers()
   }, [loadUsers])
 
   const selected = users.find((user) => user.id === selectedId) ?? null
 
   useEffect(() => {
+    // Draft state intentionally resets when the selected database record changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft(selected?.modulePermissions ?? [])
   }, [selected])
 

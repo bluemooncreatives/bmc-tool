@@ -26,6 +26,7 @@ function getTransporter(): Transporter | null {
       host: config.host,
       port: config.port,
       secure: config.secure,
+      requireTLS: !config.secure,
       auth: { user: config.user, pass: config.password },
       pool: true,
       maxConnections: 3,

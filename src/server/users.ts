@@ -94,8 +94,21 @@ async function prepareUsersCollection(
     { $set: { failedSignInAttempts: 0 } }
   )
 
+  const configuredPassword = getSuperadminPassword()
+  if (
+    configuredPassword &&
+    (configuredPassword.length < 8 ||
+      configuredPassword.length > 128 ||
+      !/[a-z]/.test(configuredPassword) ||
+      !/[A-Z]/.test(configuredPassword) ||
+      !/\d/.test(configuredPassword))
+  ) {
+    throw new Error(
+      'SUPERADMIN_PASSWORD must be 8-128 characters and include uppercase, lowercase, and a number.'
+    )
+  }
   const bootstrapPassword =
-    getSuperadminPassword() ?? randomBytes(32).toString('base64url')
+    configuredPassword ?? randomBytes(32).toString('base64url')
 
   // setOnInsert makes the configured password a one-time bootstrap secret.
   // Changing the environment later cannot silently replace a real password.

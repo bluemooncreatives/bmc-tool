@@ -2,6 +2,7 @@ import { emailSchema, parseJsonBody } from '@/server/auth-schemas'
 import { createOtpChallenge, maskEmail, OtpError } from '@/server/otp'
 import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { getUsersCollection, normalizeEmail } from '@/server/users'
+import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -61,9 +62,15 @@ export async function POST(request: Request) {
     }
     // eslint-disable-next-line no-console
     console.error('forgot-password request failed', error)
-    return NextResponse.json(
-      { error: 'Could not send a verification code. Please try again.' },
-      { status: 500 }
-    )
+    // Preserve the same externally visible response as an unknown email. This
+    // prevents SMTP availability from becoming an account-enumeration oracle.
+    return NextResponse.json({
+      message:
+        'If an account exists for that email, a verification code has been sent.',
+      challengeId: new ObjectId().toHexString(),
+      email: maskEmail(email),
+      expiresIn: 10 * 60,
+      resendAfter: 60,
+    })
   }
 }

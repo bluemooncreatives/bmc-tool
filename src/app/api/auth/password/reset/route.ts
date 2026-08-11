@@ -1,4 +1,5 @@
 import { resetPasswordSchema, parseJsonBody } from '@/server/auth-schemas'
+import { isProduction } from '@/server/env'
 import {
   consumePasswordResetAuthorization,
   PASSWORD_RESET_COOKIE,
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     cookieStore.set(PASSWORD_RESET_COOKIE, '', {
       httpOnly: true,
       sameSite: 'lax',
+      secure: isProduction,
       path: '/api/auth/password',
       maxAge: 0,
     })
