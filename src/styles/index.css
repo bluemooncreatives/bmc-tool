@@ -15,7 +15,18 @@
   }
   body {
     @apply min-h-svh w-full bg-background text-foreground;
+    font-family: var(--font-sans);
     letter-spacing: var(--tracking-normal);
+  }
+
+  /* Codes and segmented verification inputs need uncompressed characters. */
+  code,
+  pre,
+  kbd,
+  samp,
+  .font-mono,
+  [data-slot='input-otp-slot'] {
+    letter-spacing: normal;
   }
 
   /* Override Radix scroll locking for sticky headers */

@@ -58,7 +58,7 @@
     0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
   --shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.13);
 
-  --tracking-normal: -0.01em;
+  --tracking-normal: -0.08em;
 }
 
 .dark {
@@ -119,9 +119,8 @@
 }
 
 @theme inline {
-  --font-inter: 'Inter Variable', var(--font-sans);
-  --font-manrope: 'Manrope Variable', var(--font-sans);
-  --font-system: var(--font-sans);
+  --font-sans:
+    var(--font-hanken-grotesk), 'Hanken Grotesk', ui-sans-serif, sans-serif;
   --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
 
@@ -171,22 +170,10 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
-  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-tighter: var(--tracking-normal);
+  --tracking-tight: var(--tracking-normal);
   --tracking-normal: var(--tracking-normal);
-  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
-  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
-  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
-}
-
-html.font-inter {
-  font-family: var(--font-inter);
-}
-
-html.font-manrope {
-  font-family: var(--font-manrope);
-}
-
-html.font-system {
-  font-family: var(--font-system);
+  --tracking-wide: var(--tracking-normal);
+  --tracking-wider: var(--tracking-normal);
+  --tracking-widest: var(--tracking-normal);
 }

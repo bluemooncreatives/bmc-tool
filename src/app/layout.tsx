@@ -1,17 +1,21 @@
-import { fonts } from '@/config/fonts'
 import '@/styles/index.css'
-import '@fontsource-variable/inter'
-import '@fontsource-variable/manrope'
 import type { Metadata, Viewport } from 'next'
-import { cookies } from 'next/headers'
+import { Hanken_Grotesk } from 'next/font/google'
+
+const hankenGrotesk = Hanken_Grotesk({
+  subsets: ['latin'],
+  weight: 'variable',
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-hanken-grotesk',
+})
 
 export const metadata: Metadata = {
   title: {
     default: 'Blue Moon Creatives Tool',
     template: '%s | Blue Moon Creatives Tool',
   },
-  description:
-    'The internal operations workspace for Blue Moon Creatives.',
+  description: 'The internal operations workspace for Blue Moon Creatives.',
   icons: {
     // The blue mark reads on both light and dark tab bars, so one file covers
     // both schemes.
@@ -25,14 +29,15 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const fontCookie = (await cookies()).get('font')?.value
-  const font = fonts.find((candidate) => candidate === fontCookie) ?? fonts[0]
-
   return (
-    <html lang='en' className={`font-${font}`} suppressHydrationWarning>
+    <html
+      lang='en'
+      className={`${hankenGrotesk.variable} ${hankenGrotesk.className}`}
+      suppressHydrationWarning
+    >
       <body>{children}</body>
     </html>
   )
