@@ -1,5 +1,8 @@
 import { parseJsonBody, signInSchema } from '@/server/auth-schemas'
-import { notifySuccessfulSignIn } from '@/server/notification-events'
+import {
+  notifyAccountLocked,
+  notifySuccessfulSignIn,
+} from '@/server/notification-events'
 import { createOtpChallenge, maskEmail, OtpError } from '@/server/otp'
 import { hashPassword, verifyPassword } from '@/server/password'
 import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
@@ -61,22 +64,21 @@ export async function POST(request: Request) {
     const valid = await verifyPassword(body.data.password, user.passwordHash)
     if (!valid) {
       const attempts = (user.failedSignInAttempts ?? 0) + 1
+      const lockedUntil =
+        attempts >= MAX_FAILED_ATTEMPTS
+          ? new Date(now.getTime() + LOCK_MINUTES * 60 * 1000)
+          : undefined
       await users.updateOne(
         { _id: user._id },
         {
           $set: {
             failedSignInAttempts: attempts,
             updatedAt: now,
-            ...(attempts >= MAX_FAILED_ATTEMPTS
-              ? {
-                  lockedUntil: new Date(
-                    now.getTime() + LOCK_MINUTES * 60 * 1000
-                  ),
-                }
-              : {}),
+            ...(lockedUntil ? { lockedUntil } : {}),
           },
         }
       )
+      if (lockedUntil) await notifyAccountLocked(user, lockedUntil)
       return NextResponse.json(
         { error: 'Invalid email or password.' },
         { status: 401 }

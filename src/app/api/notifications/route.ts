@@ -6,6 +6,7 @@ import {
 } from '@/server/authorization'
 import { notificationActionSchema } from '@/server/notification-schemas'
 import {
+  createNotification,
   getNotificationCollections,
   toAppNotification,
   type NotificationDoc,
@@ -37,6 +38,15 @@ export async function GET(request: Request) {
       : 20
     const cursor = search.get('cursor')
     const unreadOnly = search.get('unread') === 'true'
+    await createNotification({
+      recipientId: user._id,
+      category: 'system',
+      level: 'success',
+      title: 'Notification center enabled',
+      message:
+        'Account, security, permission, and workspace updates now appear here in one place.',
+      dedupeKey: `notification-center-enabled:${user._id.toHexString()}`,
+    })
     const filter: Filter<NotificationDoc> = {
       recipientId: user._id,
       archivedAt: { $exists: false },
