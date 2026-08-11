@@ -1,6 +1,7 @@
 import { parseJsonBody, signInSchema } from '@/server/auth-schemas'
 import { createOtpChallenge, maskEmail, OtpError } from '@/server/otp'
 import { hashPassword, verifyPassword } from '@/server/password'
+import { notifySuccessfulSignIn } from '@/server/notification-events'
 import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { isActiveStatus, requiresMfa } from '@/server/roles'
 import { startSession } from '@/server/session'
@@ -121,6 +122,7 @@ export async function POST(request: Request) {
       failedSignInAttempts: 0,
       lockedUntil: undefined,
     }
+    await notifySuccessfulSignIn(signedInUser, request)
     return NextResponse.json({
       user: await startSession(signedInUser, body.data.rememberMe ?? true),
     })

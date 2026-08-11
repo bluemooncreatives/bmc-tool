@@ -1,5 +1,6 @@
 import { parseJsonBody, signUpSchema } from '@/server/auth-schemas'
 import { hashPassword } from '@/server/password'
+import { notifyAccountCreated } from '@/server/notification-events'
 import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { startSession } from '@/server/session'
 import {
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
     }
 
     await users.insertOne(user)
+    await notifyAccountCreated(user)
 
     return NextResponse.json(
       { user: await startSession(user) },

@@ -5,6 +5,7 @@ import {
   PASSWORD_RESET_COOKIE,
 } from '@/server/otp'
 import { hashPassword } from '@/server/password'
+import { notifyPasswordChanged } from '@/server/notification-events'
 import { clearSession } from '@/server/session'
 import { getUsersCollection } from '@/server/users'
 import { cookies } from 'next/headers'
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
         { status: 404 }
       )
     }
+    await notifyPasswordChanged(authorization.userId)
 
     await clearSession()
     cookieStore.set(PASSWORD_RESET_COOKIE, '', {

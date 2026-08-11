@@ -12,9 +12,14 @@ export class AuthorizationError extends Error {
   }
 }
 
-export async function requireSuperadmin(): Promise<UserDoc> {
+export async function requireAuthenticatedUser(): Promise<UserDoc> {
   const user = await getCurrentUser()
   if (!user) throw new AuthorizationError('Not authenticated.', 401)
+  return user
+}
+
+export async function requireSuperadmin(): Promise<UserDoc> {
+  const user = await requireAuthenticatedUser()
   if (!user.role.includes('superadmin') || !user.isSystemOwner) {
     throw new AuthorizationError(
       'Only the superadmin can manage module access.',
@@ -27,8 +32,7 @@ export async function requireSuperadmin(): Promise<UserDoc> {
 export async function requireModulePermission(
   module: ModuleKey
 ): Promise<UserDoc> {
-  const user = await getCurrentUser()
-  if (!user) throw new AuthorizationError('Not authenticated.', 401)
+  const user = await requireAuthenticatedUser()
   if (!hasModulePermission(user, module)) {
     throw new AuthorizationError('You do not have access to this module.', 403)
   }

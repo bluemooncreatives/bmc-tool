@@ -5,6 +5,7 @@ import {
   requireSuperadmin,
 } from '@/server/authorization'
 import { recordPermissionAudit } from '@/server/permission-audit'
+import { notifyPermissionsChanged } from '@/server/notification-events'
 import { updatePermissionsSchema } from '@/server/permission-schemas'
 import { getUsersCollection, type UserDoc } from '@/server/users'
 import { ObjectId, type Filter } from 'mongodb'
@@ -153,6 +154,14 @@ export async function PATCH(request: Request) {
       // eslint-disable-next-line no-console
       console.error('permission audit write failed', auditError)
     }
+
+    await notifyPermissionsChanged({
+      actor,
+      target,
+      before,
+      after: permissions,
+      changedAt: now,
+    })
 
     return NextResponse.json({ user: toPermissionUser(updated) })
   } catch (error) {

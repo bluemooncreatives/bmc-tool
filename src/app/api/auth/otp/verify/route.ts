@@ -1,5 +1,6 @@
 import { otpVerifySchema, parseJsonBody } from '@/server/auth-schemas'
 import { isProduction } from '@/server/env'
+import { notifySuccessfulSignIn } from '@/server/notification-events'
 import {
   authorizePasswordReset,
   OtpError,
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
           },
         }
       )
+      await notifySuccessfulSignIn(user, request)
       return NextResponse.json({
         purpose: 'sign-in',
         user: await startSession(user, challenge.rememberMe ?? true),
