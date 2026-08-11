@@ -72,7 +72,7 @@ describe('SignUp page', () => {
     expect(signUpMock).not.toHaveBeenCalled()
   })
 
-  it('creates the account and navigates to the dashboard', async () => {
+  it('creates a deny-by-default account and opens the access notice', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
     await userEvent.fill(passwordInput, 'Secure123')
     await userEvent.fill(confirmPasswordInput, 'Secure123')
@@ -86,7 +86,7 @@ describe('SignUp page', () => {
     })
 
     await vi.waitFor(() =>
-      expect(navigate).toHaveBeenCalledWith({ to: '/', replace: true })
+      expect(navigate).toHaveBeenCalledWith({ to: '/403', replace: true })
     )
   })
 

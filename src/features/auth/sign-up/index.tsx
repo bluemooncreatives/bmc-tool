@@ -48,9 +48,10 @@ export function SignUp() {
 
     try {
       const user = await auth.signUp({ email, password })
-      toast.success(`Account created for ${user.email}.`)
-      // Sign-up starts a session, so land the new user on the dashboard.
-      navigate({ to: '/', replace: true })
+      toast.success(
+        `Account created for ${user.email}. A Super Admin can now grant module access.`
+      )
+      navigate({ to: '/403', replace: true })
     } catch (err) {
       setError(
         err instanceof ApiError
