@@ -27,8 +27,22 @@ export function SignIn() {
     setIsLoading(true)
 
     try {
-      const user = await auth.signIn({ email, password, rememberMe })
-      toast.success(`Welcome back, ${user.email}!`)
+      const result = await auth.signIn({ email, password, rememberMe })
+      if ('requiresOtp' in result) {
+        toast.success(`Verification code sent to ${result.email}.`)
+        navigate({
+          to: '/otp',
+          search: {
+            challenge: result.challengeId,
+            email: result.email,
+            purpose: 'sign-in',
+            redirect,
+          },
+        })
+        return
+      }
+
+      toast.success(`Welcome back, ${result.email}!`)
       navigate({ to: redirect || '/', replace: true })
     } catch (err) {
       setError(

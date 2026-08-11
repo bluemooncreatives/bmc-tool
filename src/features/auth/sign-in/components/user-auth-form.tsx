@@ -57,14 +57,27 @@ export function UserAuthForm({
 
     toast.promise(auth.signIn(data), {
       loading: 'Signing in...',
-      success: (user) => {
+      success: (result) => {
         setIsLoading(false)
+
+        if ('requiresOtp' in result) {
+          navigate({
+            to: '/otp',
+            search: {
+              challenge: result.challengeId,
+              email: result.email,
+              purpose: 'sign-in',
+              redirect: redirectTo,
+            },
+          })
+          return `Verification code sent to ${result.email}.`
+        }
 
         // Redirect to the stored location or default to dashboard
         const targetPath = redirectTo || '/'
         navigate({ to: targetPath, replace: true })
 
-        return `Welcome back, ${user.email}!`
+        return `Welcome back, ${result.email}!`
       },
       error: (error) => {
         setIsLoading(false)

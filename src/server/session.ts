@@ -8,6 +8,7 @@ import {
   verifyToken,
   type TokenPayload,
 } from './jwt'
+import { isActiveStatus } from './roles'
 import {
   getUsersCollection,
   toPublicUser,
@@ -104,7 +105,9 @@ export async function clearSession(): Promise<void> {
   })
 }
 
-async function loadUserForToken(payload: TokenPayload): Promise<UserDoc | null> {
+async function loadUserForToken(
+  payload: TokenPayload
+): Promise<UserDoc | null> {
   let id: ObjectId
   try {
     id = new ObjectId(payload.sub)
@@ -115,6 +118,10 @@ async function loadUserForToken(payload: TokenPayload): Promise<UserDoc | null> 
   const users = await getUsersCollection()
   const user = await users.findOne({ _id: id })
   if (!user) return null
+
+  // A suspended/inactive account loses access immediately, including through
+  // a refresh token issued before its status changed.
+  if (!isActiveStatus(user.status ?? 'active')) return null
 
   // Rejects tokens issued before the user's last credential change.
   if (user.tokenVersion !== payload.ver) return null

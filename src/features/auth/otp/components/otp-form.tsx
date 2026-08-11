@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { toast } from 'sonner'
+import { useAuthStore, type AuthUser } from '@/stores/auth-store'
+import { apiFetch, ApiError } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,11 +30,37 @@ const formSchema = z.object({
     .max(6, 'Please enter the 6-digit code.'),
 })
 
-type OtpFormProps = React.HTMLAttributes<HTMLFormElement>
+type OtpFormProps = React.HTMLAttributes<HTMLFormElement> & {
+  challengeId?: string
+  email?: string
+  purpose?: 'sign-in' | 'password-reset'
+  redirect?: string
+}
 
-export function OtpForm({ className, ...props }: OtpFormProps) {
+export function OtpForm({
+  className,
+  challengeId: initialChallengeId = '',
+  email,
+  purpose: _purpose = 'sign-in',
+  redirect,
+  ...props
+}: OtpFormProps) {
   const navigate = useNavigate()
+  const { auth } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [challengeId, setChallengeId] = useState(initialChallengeId)
+  const [secondsUntilResend, setSecondsUntilResend] = useState(60)
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (secondsUntilResend <= 0) return
+    const timer = window.setInterval(
+      () => setSecondsUntilResend((seconds) => Math.max(0, seconds - 1)),
+      1000
+    )
+    return () => window.clearInterval(timer)
+  }, [secondsUntilResend])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,14 +70,71 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const otp = form.watch('otp')
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    if (!challengeId) {
+      setServerError('This verification request is missing. Start again.')
+      return
+    }
     setIsLoading(true)
-    showSubmittedData(data)
+    setServerError(null)
+    try {
+      const response = await apiFetch<
+        | { purpose: 'sign-in'; user: AuthUser }
+        | { purpose: 'password-reset'; challengeId: string }
+      >('/api/auth/otp/verify', {
+        method: 'POST',
+        body: { challengeId, code: data.otp },
+      })
 
-    setTimeout(() => {
+      if (response.purpose === 'sign-in') {
+        auth.setUser(response.user)
+        toast.success(`Welcome back, ${response.user.email}!`)
+        navigate({ to: redirect || '/', replace: true })
+      } else {
+        navigate({
+          to: '/reset-password',
+          search: { challenge: response.challengeId },
+          replace: true,
+        })
+      }
+    } catch (error) {
+      setServerError(
+        error instanceof ApiError
+          ? error.message
+          : 'Could not verify the code. Please try again.'
+      )
+      form.setValue('otp', '')
+    } finally {
       setIsLoading(false)
-      navigate({ to: '/' })
-    }, 1000)
+    }
+  }
+
+  async function resend() {
+    if (!challengeId || secondsUntilResend > 0) return
+    setIsResending(true)
+    setServerError(null)
+    try {
+      const response = await apiFetch<{
+        challengeId: string
+        email: string
+        resendAfter: number
+      }>('/api/auth/otp/resend', {
+        method: 'POST',
+        body: { challengeId },
+      })
+      setChallengeId(response.challengeId)
+      setSecondsUntilResend(response.resendAfter)
+      form.setValue('otp', '')
+      toast.success(`A new code was sent to ${response.email || email}.`)
+    } catch (error) {
+      setServerError(
+        error instanceof ApiError
+          ? error.message
+          : 'Could not send a new code. Please try again.'
+      )
+    } finally {
+      setIsResending(false)
+    }
   }
 
   return (
@@ -92,7 +177,24 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
           )}
         />
         <Button className='mt-2' disabled={otp.length < 6 || isLoading}>
-          Verify
+          {isLoading ? 'Verifying…' : 'Verify code'}
+        </Button>
+        {serverError && (
+          <p role='alert' className='text-sm text-destructive'>
+            {serverError}
+          </p>
+        )}
+        <Button
+          type='button'
+          variant='ghost'
+          disabled={secondsUntilResend > 0 || isResending || isLoading}
+          onClick={resend}
+        >
+          {isResending
+            ? 'Sending…'
+            : secondsUntilResend > 0
+              ? `Resend code in ${secondsUntilResend}s`
+              : 'Resend code'}
         </Button>
       </form>
     </Form>

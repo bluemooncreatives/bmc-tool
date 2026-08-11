@@ -24,7 +24,15 @@ type ApiFetchOptions = {
 }
 
 /** Endpoints that must never trigger a refresh attempt of their own. */
-const NO_REFRESH_PATHS = ['/api/auth/refresh', '/api/auth/sign-in', '/api/auth/sign-up']
+const NO_REFRESH_PATHS = [
+  '/api/auth/refresh',
+  '/api/auth/sign-in',
+  '/api/auth/sign-up',
+  '/api/auth/password/forgot',
+  '/api/auth/password/reset',
+  '/api/auth/otp/resend',
+  '/api/auth/otp/verify',
+]
 
 /**
  * Concurrent 401s share one refresh call, so a page issuing several requests
@@ -64,7 +72,8 @@ export async function apiFetch<T>(
   const response = await fetch(path, {
     method,
     credentials: 'same-origin',
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers:
+      body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 

@@ -42,6 +42,29 @@ Open `http://localhost:3000`.
 
 The Clerk routes are optional demonstrations. To enable them, copy `.env.example` to `.env.local` and provide a publishable key.
 
+## Superadmin, email, and OTP setup
+
+The MongoDB-backed authentication flow automatically creates or upgrades
+`contact.bluemooncreatives@gmail.com` as the protected system owner. The owner
+always has the `superadmin` role, remains active, and must complete email OTP
+verification after entering a valid password.
+
+1. Copy the variables from `.env.example` into `.env` or `.env.local`.
+2. Set `MONGODB_URI` and a long random `JWT_SECRET`.
+3. Enable 2-Step Verification on the Gmail account and create a Google App
+   Password.
+4. Put that 16-character App Password in `SMTP_PASSWORD` (never the normal
+   Gmail password).
+5. Optionally set `SUPERADMIN_PASSWORD` before the first request. If the owner
+   already exists or no bootstrap password was set, use **Reset password** on
+   the sign-in screen; the emailed OTP authorizes creation of a new password.
+
+In local development only, a missing `SMTP_PASSWORD` prints the OTP to the
+server console. Production refuses email delivery when SMTP is not configured.
+OTP values are not stored directly: only keyed hashes are persisted. Codes are
+single-use, expire after 10 minutes, allow five attempts, have a 60-second
+resend cooldown, and are limited to five sends per email and purpose per hour.
+
 ## Quality checks
 
 ```bash

@@ -12,6 +12,36 @@ export const signInSchema = credentialsSchema.extend({
 
 export const signUpSchema = credentialsSchema
 
+export const emailSchema = z.object({
+  email: z.email('Enter a valid email address.'),
+})
+
+export const otpVerifySchema = z.object({
+  challengeId: z.string().min(1, 'The verification request is missing.'),
+  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+})
+
+export const otpResendSchema = z.object({
+  challengeId: z.string().min(1, 'The verification request is missing.'),
+})
+
+export const resetPasswordSchema = z
+  .object({
+    challengeId: z.string().min(1, 'The verification request is missing.'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long.')
+      .max(128, 'Password must be no more than 128 characters long.')
+      .regex(/[a-z]/, 'Password must include a lowercase letter.')
+      .regex(/[A-Z]/, 'Password must include an uppercase letter.')
+      .regex(/\d/, 'Password must include a number.'),
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ['confirmPassword'],
+  })
+
 export type Credentials = z.infer<typeof credentialsSchema>
 
 type ParseResult<T> = { ok: true; data: T } | { ok: false; error: string }

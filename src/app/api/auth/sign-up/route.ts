@@ -1,10 +1,14 @@
-import { randomBytes } from 'node:crypto'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
 import { parseJsonBody, signUpSchema } from '@/server/auth-schemas'
 import { hashPassword } from '@/server/password'
 import { startSession } from '@/server/session'
-import { getUsersCollection, normalizeEmail, type UserDoc } from '@/server/users'
+import {
+  getUsersCollection,
+  normalizeEmail,
+  type UserDoc,
+} from '@/server/users'
+import { ObjectId } from 'mongodb'
+import { NextResponse } from 'next/server'
+import { randomBytes } from 'node:crypto'
 
 export const runtime = 'nodejs'
 
@@ -28,7 +32,11 @@ export async function POST(request: Request) {
       email,
       passwordHash: await hashPassword(body.data.password),
       role: ['user'],
+      status: 'active',
       accountNo: generateAccountNo(),
+      mfaEnabled: false,
+      failedSignInAttempts: 0,
+      modulePermissions: [],
       tokenVersion: 0,
       createdAt: now,
       updatedAt: now,
@@ -36,7 +44,10 @@ export async function POST(request: Request) {
 
     await users.insertOne(user)
 
-    return NextResponse.json({ user: await startSession(user) }, { status: 201 })
+    return NextResponse.json(
+      { user: await startSession(user) },
+      { status: 201 }
+    )
   } catch (error) {
     // 11000 is the unique index on email rejecting a duplicate.
     if (

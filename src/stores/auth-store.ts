@@ -6,6 +6,11 @@ export interface AuthUser {
   accountNo: string
   email: string
   role: string[]
+  status?: 'active' | 'inactive' | 'invited' | 'suspended'
+  firstName?: string
+  lastName?: string
+  mfaEnabled?: boolean
+  modulePermissions?: string[]
 }
 
 /**
@@ -18,6 +23,14 @@ type Credentials = { email: string; password: string }
 /** rememberMe=false keeps the session only until the browser closes. */
 type SignInCredentials = Credentials & { rememberMe?: boolean }
 type SessionResponse = { user: AuthUser }
+export type OtpRequiredResponse = {
+  requiresOtp: true
+  challengeId: string
+  email: string
+  expiresIn: number
+  resendAfter: number
+}
+export type SignInResult = AuthUser | OtpRequiredResponse
 
 interface AuthState {
   auth: {
@@ -26,7 +39,7 @@ interface AuthState {
     setUser: (user: AuthUser | null) => void
     /** Resolves the session from the httpOnly cookies. Safe to call repeatedly. */
     hydrate: () => Promise<AuthUser | null>
-    signIn: (credentials: SignInCredentials) => Promise<AuthUser>
+    signIn: (credentials: SignInCredentials) => Promise<SignInResult>
     signUp: (credentials: Credentials) => Promise<AuthUser>
     signOut: () => Promise<void>
     /** Clears local state only — use signOut to also drop the server session. */
@@ -74,12 +87,17 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       },
 
       signIn: async (credentials) => {
-        const { user } = await apiFetch<SessionResponse>('/api/auth/sign-in', {
-          method: 'POST',
-          body: credentials,
-        })
-        get().auth.setUser(user)
-        return user
+        const response = await apiFetch<SessionResponse | OtpRequiredResponse>(
+          '/api/auth/sign-in',
+          {
+            method: 'POST',
+            body: credentials,
+          }
+        )
+        if ('requiresOtp' in response) return response
+
+        get().auth.setUser(response.user)
+        return response.user
       },
 
       signUp: async (credentials) => {
