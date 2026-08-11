@@ -4,8 +4,8 @@ import {
   AuthorizationError,
   requireSuperadmin,
 } from '@/server/authorization'
-import { recordPermissionAudit } from '@/server/permission-audit'
 import { notifyPermissionsChanged } from '@/server/notification-events'
+import { recordPermissionAudit } from '@/server/permission-audit'
 import { updatePermissionsSchema } from '@/server/permission-schemas'
 import { getUsersCollection, type UserDoc } from '@/server/users'
 import { ObjectId, type Filter } from 'mongodb'

@@ -20,9 +20,10 @@ export const notificationActionSchema = z.discriminatedUnion('action', [
 ])
 
 export const notificationPreferencesSchema = z.object({
-  mutedCategories: z.array(z.enum(NOTIFICATION_CATEGORIES)).max(
-    NOTIFICATION_CATEGORIES.length,
-    'Too many notification categories were supplied.'
-  ),
+  mutedCategories: z
+    .array(z.enum(NOTIFICATION_CATEGORIES))
+    .max(
+      NOTIFICATION_CATEGORIES.length,
+      'Too many notification categories were supplied.'
+    ),
 })
-

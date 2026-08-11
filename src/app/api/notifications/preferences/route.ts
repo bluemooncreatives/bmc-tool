@@ -45,13 +45,9 @@ export async function PATCH(request: Request) {
     assertSameOrigin(request)
     const user = await requireAuthenticatedUser()
     return NextResponse.json(
-      await saveNotificationPreferences(
-        user._id,
-        body.data.mutedCategories
-      )
+      await saveNotificationPreferences(user._id, body.data.mutedCategories)
     )
   } catch (error) {
     return errorResponse(error)
   }
 }
-

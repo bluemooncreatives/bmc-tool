@@ -5,7 +5,7 @@ export function SettingsNotifications() {
   return (
     <ContentSection
       title='Notifications'
-      desc='Configure how you receive notifications.'
+      desc='Control which workspace activity appears in your centralized notification center.'
     >
       <NotificationsForm />
     </ContentSection>

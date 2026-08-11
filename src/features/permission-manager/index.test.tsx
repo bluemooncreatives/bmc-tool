@@ -13,7 +13,7 @@ vi.mock('@/components/config-drawer', () => ({ ConfigDrawer: () => null }))
 vi.mock('@/components/profile-dropdown', () => ({
   ProfileDropdown: () => null,
 }))
-vi.mock('@/components/theme-switch', () => ({ ThemeSwitch: () => null }))
+vi.mock('@/components/header-actions', () => ({ HeaderActions: () => null }))
 
 const longEmail =
   'a-very-long-permission-manager-address@a-very-long-example-domain.com'

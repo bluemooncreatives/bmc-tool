@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb'
+import type { ObjectId } from 'mongodb'
 import { MODULE_DEFINITIONS, type ModuleKey } from '@/lib/permissions'
 import { createNotifications } from './notifications'
 import { getUsersCollection, type UserDoc } from './users'
@@ -84,6 +84,26 @@ export function notifySuccessfulSignIn(
   })
 }
 
+export function notifyAccountLocked(
+  user: UserDoc,
+  lockedUntil: Date
+): Promise<void> {
+  return safelyPublish('account-locked', async () => {
+    await createNotifications([
+      {
+        recipientId: user._id,
+        category: 'security',
+        level: 'error',
+        title: 'Account temporarily locked',
+        message:
+          'Repeated unsuccessful sign-in attempts temporarily locked your account. Reset your password if these attempts were not yours.',
+        dedupeKey: `account-locked:${user._id.toHexString()}:${lockedUntil.getTime()}`,
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1_000),
+      },
+    ])
+  })
+}
+
 export function notifyPasswordChanged(userId: ObjectId): Promise<void> {
   return safelyPublish('password-changed', async () => {
     await createNotifications([
@@ -143,4 +163,3 @@ export function notifyPermissionsChanged(input: {
     ])
   })
 }
-

@@ -1,220 +1,213 @@
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from '@tanstack/react-router'
-import { showSubmittedData } from '@/lib/show-submitted-data'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { BellRing, Loader2, RotateCcw, ShieldCheck } from 'lucide-react'
+import { toast } from 'sonner'
+import { apiFetch, ApiError } from '@/lib/api-client'
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+  NOTIFICATION_CATEGORY_DEFINITIONS,
+  REQUIRED_NOTIFICATION_CATEGORIES,
+  type NotificationCategory,
+  type NotificationPreferences,
+} from '@/lib/notifications'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 
-const notificationsFormSchema = z.object({
-  type: z.enum(['all', 'mentions', 'none'], {
-    error: (iss) =>
-      iss.input === undefined
-        ? 'Please select a notification type.'
-        : undefined,
-  }),
-  mobile: z.boolean().default(false).optional(),
-  communication_emails: z.boolean().default(false).optional(),
-  social_emails: z.boolean().default(false).optional(),
-  marketing_emails: z.boolean().default(false).optional(),
-  security_emails: z.boolean(),
-})
+const requiredCategories = new Set<NotificationCategory>(
+  REQUIRED_NOTIFICATION_CATEGORIES
+)
 
-type NotificationsFormValues = z.infer<typeof notificationsFormSchema>
-
-// This can come from your database or API.
-const defaultValues: Partial<NotificationsFormValues> = {
-  communication_emails: false,
-  marketing_emails: false,
-  social_emails: true,
-  security_emails: true,
+function sameCategories(
+  left: NotificationCategory[],
+  right: NotificationCategory[]
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((category) => right.includes(category))
+  )
 }
 
 export function NotificationsForm() {
-  const form = useForm<NotificationsFormValues>({
-    resolver: zodResolver(notificationsFormSchema),
-    defaultValues,
-  })
+  const [saved, setSaved] = useState<NotificationCategory[]>([])
+  const [muted, setMuted] = useState<NotificationCategory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadPreferences = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await apiFetch<NotificationPreferences>(
+        '/api/notifications/preferences'
+      )
+      setSaved(response.mutedCategories)
+      setMuted(response.mutedCategories)
+    } catch (requestError) {
+      setError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Could not load notification preferences.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Initial server synchronization; loadPreferences owns the state updates.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadPreferences()
+  }, [loadPreferences])
+
+  const isDirty = useMemo(() => !sameCategories(saved, muted), [muted, saved])
+
+  function setCategoryEnabled(
+    category: NotificationCategory,
+    enabled: boolean
+  ) {
+    if (requiredCategories.has(category)) return
+    setMuted((current) => {
+      const next = new Set(current)
+      if (enabled) next.delete(category)
+      else next.add(category)
+      return NOTIFICATION_CATEGORY_DEFINITIONS.map((item) => item.key).filter(
+        (key) => next.has(key)
+      )
+    })
+  }
+
+  async function savePreferences() {
+    if (!isDirty || isSaving) return
+    setIsSaving(true)
+    setError(null)
+    try {
+      const response = await apiFetch<NotificationPreferences>(
+        '/api/notifications/preferences',
+        { method: 'PATCH', body: { mutedCategories: muted } }
+      )
+      setSaved(response.mutedCategories)
+      setMuted(response.mutedCategories)
+      toast.success('Notification preferences updated.')
+    } catch (requestError) {
+      setError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Could not update notification preferences.'
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className='grid gap-3' aria-label='Loading notification preferences'>
+        {Array.from({ length: 6 }, (_, index) => (
+          <Skeleton key={index} className='h-20 w-full rounded-lg' />
+        ))}
+      </div>
+    )
+  }
+
+  if (error && !isDirty && saved.length === 0) {
+    return (
+      <div className='rounded-lg border border-destructive/40 bg-destructive/5 p-5'>
+        <p className='text-sm text-destructive'>{error}</p>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          className='mt-4'
+          onClick={() => void loadPreferences()}
+        >
+          Try again
+        </Button>
+      </div>
+    )
+  }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => showSubmittedData(data))}
-        className='space-y-8'
-      >
-        <FormField
-          control={form.control}
-          name='type'
-          render={({ field }) => (
-            <FormItem className='relative space-y-3'>
-              <FormLabel>Notify me about...</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className='flex flex-col gap-2'
-                >
-                  <FormItem className='flex items-center'>
-                    <FormControl>
-                      <RadioGroupItem value='all' />
-                    </FormControl>
-                    <FormLabel className='font-normal'>
-                      All new messages
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className='flex items-center'>
-                    <FormControl>
-                      <RadioGroupItem value='mentions' />
-                    </FormControl>
-                    <FormLabel className='font-normal'>
-                      Direct messages and mentions
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className='flex items-center'>
-                    <FormControl>
-                      <RadioGroupItem value='none' />
-                    </FormControl>
-                    <FormLabel className='font-normal'>Nothing</FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className='relative'>
-          <h3 className='mb-4 text-lg font-medium'>Email Notifications</h3>
-          <div className='space-y-4'>
-            <FormField
-              control={form.control}
-              name='communication_emails'
-              render={({ field }) => (
-                <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                  <div className='space-y-0.5'>
-                    <FormLabel className='text-base'>
-                      Communication emails
-                    </FormLabel>
-                    <FormDescription>
-                      Receive emails about your account activity.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='marketing_emails'
-              render={({ field }) => (
-                <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                  <div className='space-y-0.5'>
-                    <FormLabel className='text-base'>
-                      Marketing emails
-                    </FormLabel>
-                    <FormDescription>
-                      Receive emails about new products, features, and more.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='social_emails'
-              render={({ field }) => (
-                <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                  <div className='space-y-0.5'>
-                    <FormLabel className='text-base'>Social emails</FormLabel>
-                    <FormDescription>
-                      Receive emails for friend requests, follows, and more.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='security_emails'
-              render={({ field }) => (
-                <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                  <div className='space-y-0.5'>
-                    <FormLabel className='text-base'>Security emails</FormLabel>
-                    <FormDescription>
-                      Receive emails about your account activity and security.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled
-                      aria-readonly
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+    <div className='space-y-6'>
+      <div className='rounded-lg border bg-muted/30 p-4'>
+        <div className='flex items-start gap-3'>
+          <BellRing className='mt-0.5 size-5 shrink-0 text-primary' />
+          <div>
+            <h3 className='font-medium'>Central notification center</h3>
+            <p className='mt-1 text-sm leading-relaxed text-muted-foreground'>
+              Choose which workspace sections can send updates to your header
+              notification center. System and security events always remain on
+              so important account alerts cannot be missed.
+            </p>
           </div>
         </div>
-        <FormField
-          control={form.control}
-          name='mobile'
-          render={({ field }) => (
-            <FormItem className='relative flex flex-row items-start'>
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className='space-y-1 leading-none'>
-                <FormLabel>
-                  Use different settings for my mobile devices
-                </FormLabel>
-                <FormDescription>
-                  You can manage your mobile notifications in the{' '}
-                  <Link
-                    to='/settings'
-                    className='underline decoration-dashed underline-offset-4 hover:decoration-solid'
-                  >
-                    mobile settings
-                  </Link>{' '}
-                  page.
-                </FormDescription>
+      </div>
+
+      {error && (
+        <p
+          role='alert'
+          className='rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive'
+        >
+          {error}
+        </p>
+      )}
+
+      <div className='grid gap-3'>
+        {NOTIFICATION_CATEGORY_DEFINITIONS.map((category) => {
+          const required = requiredCategories.has(category.key)
+          const enabled = required || !muted.includes(category.key)
+          return (
+            <div
+              key={category.key}
+              className='flex min-w-0 items-center justify-between gap-4 rounded-lg border p-4'
+            >
+              <div className='flex min-w-0 items-start gap-3'>
+                <span className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                  {required ? (
+                    <ShieldCheck className='size-4' />
+                  ) : (
+                    <BellRing className='size-4' />
+                  )}
+                </span>
+                <div className='min-w-0'>
+                  <p className='text-sm font-medium'>{category.title}</p>
+                  <p className='mt-0.5 text-xs leading-relaxed text-muted-foreground'>
+                    {category.description}
+                    {required && ' Always enabled.'}
+                  </p>
+                </div>
               </div>
-            </FormItem>
-          )}
-        />
-        <Button type='submit'>Update notifications</Button>
-      </form>
-    </Form>
+              <Switch
+                checked={enabled}
+                disabled={required || isSaving}
+                onCheckedChange={(checked) =>
+                  setCategoryEnabled(category.key, checked)
+                }
+                aria-label={`${category.title} notifications`}
+              />
+            </div>
+          )
+        })}
+      </div>
+
+      <div className='sticky bottom-0 flex flex-col-reverse gap-2 border-t bg-background/95 py-4 backdrop-blur sm:flex-row sm:justify-end'>
+        <Button
+          type='button'
+          variant='outline'
+          disabled={!isDirty || isSaving}
+          onClick={() => setMuted(saved)}
+        >
+          <RotateCcw className='size-4' />
+          Discard
+        </Button>
+        <Button
+          type='button'
+          disabled={!isDirty || isSaving}
+          onClick={() => void savePreferences()}
+        >
+          {isSaving && <Loader2 className='size-4 animate-spin' />}
+          Save preferences
+        </Button>
+      </div>
+    </div>
   )
 }

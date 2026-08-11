@@ -56,8 +56,9 @@ async function prepareCollections(
 export async function getNotificationCollections() {
   const db = await getDb()
   const notifications = db.collection<NotificationDoc>('notifications')
-  const preferences =
-    db.collection<NotificationPreferencesDoc>('notification_preferences')
+  const preferences = db.collection<NotificationPreferencesDoc>(
+    'notification_preferences'
+  )
 
   if (!collectionsReady) {
     collectionsReady = prepareCollections(notifications, preferences).catch(
@@ -173,7 +174,9 @@ export async function createNotification(input: {
 export async function createNotifications(
   notifications: Parameters<typeof createNotification>[0][]
 ): Promise<void> {
-  const results = await Promise.allSettled(notifications.map(createNotification))
+  const results = await Promise.allSettled(
+    notifications.map(createNotification)
+  )
   const failures = results.filter((result) => result.status === 'rejected')
   if (failures.length > 0) {
     // Notification delivery must never roll back the action that produced it.
@@ -181,4 +184,3 @@ export async function createNotifications(
     console.error('notification delivery failed', failures[0])
   }
 }
-

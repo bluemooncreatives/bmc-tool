@@ -29,9 +29,7 @@ export const NOTIFICATION_CATEGORY_DEFINITIONS = [
 
 export type SystemNotificationCategory =
   (typeof SYSTEM_NOTIFICATION_CATEGORIES)[number]['key']
-export type NotificationCategory =
-  | SystemNotificationCategory
-  | ModuleKey
+export type NotificationCategory = SystemNotificationCategory | ModuleKey
 
 export const NOTIFICATION_CATEGORIES = NOTIFICATION_CATEGORY_DEFINITIONS.map(
   (category) => category.key
@@ -76,7 +74,9 @@ export function isNotificationCategory(
   )
 }
 
-export function sanitizeMutedCategories(value: unknown): NotificationCategory[] {
+export function sanitizeMutedCategories(
+  value: unknown
+): NotificationCategory[] {
   if (!Array.isArray(value)) return []
   const required = new Set<NotificationCategory>(
     REQUIRED_NOTIFICATION_CATEGORIES
@@ -90,4 +90,3 @@ export function sanitizeMutedCategories(value: unknown): NotificationCategory[] 
     ),
   ]
 }
-

@@ -1,6 +1,6 @@
 import { parseJsonBody, signUpSchema } from '@/server/auth-schemas'
-import { hashPassword } from '@/server/password'
 import { notifyAccountCreated } from '@/server/notification-events'
+import { hashPassword } from '@/server/password'
 import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { startSession } from '@/server/session'
 import {

@@ -1,11 +1,11 @@
 import { resetPasswordSchema, parseJsonBody } from '@/server/auth-schemas'
 import { isProduction } from '@/server/env'
+import { notifyPasswordChanged } from '@/server/notification-events'
 import {
   consumePasswordResetAuthorization,
   PASSWORD_RESET_COOKIE,
 } from '@/server/otp'
 import { hashPassword } from '@/server/password'
-import { notifyPasswordChanged } from '@/server/notification-events'
 import { clearSession } from '@/server/session'
 import { getUsersCollection } from '@/server/users'
 import { cookies } from 'next/headers'

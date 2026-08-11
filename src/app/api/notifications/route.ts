@@ -54,7 +54,11 @@ export async function GET(request: Request) {
 
     const { notifications } = await getNotificationCollections()
     const [results, unreadCount] = await Promise.all([
-      notifications.find(filter).sort({ _id: -1 }).limit(limit + 1).toArray(),
+      notifications
+        .find(filter)
+        .sort({ _id: -1 })
+        .limit(limit + 1)
+        .toArray(),
       notifications.countDocuments({
         recipientId: user._id,
         archivedAt: { $exists: false },
@@ -93,9 +97,7 @@ export async function PATCH(request: Request) {
       const ids = [...new Set(body.data.ids)].map((id) => new ObjectId(id))
       await notifications.updateMany(
         { _id: { $in: ids }, recipientId: user._id },
-        body.data.read
-          ? { $set: { readAt: now } }
-          : { $unset: { readAt: '' } }
+        body.data.read ? { $set: { readAt: now } } : { $unset: { readAt: '' } }
       )
     } else if (body.data.action === 'mark-all') {
       await notifications.updateMany(
@@ -133,4 +135,3 @@ export async function PATCH(request: Request) {
     return errorResponse(error)
   }
 }
-
