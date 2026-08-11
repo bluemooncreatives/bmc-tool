@@ -136,7 +136,9 @@ function SidebarProvider({
             } as React.CSSProperties
           }
           className={cn(
-            'group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar has-data-[variant=floating]:bg-muted/40',
+            // Keep the wrapper on --background for every variant, so the inset
+            // and floating gutters read as one surface with the panels.
+            'group/sidebar-wrapper flex min-h-svh w-full bg-background',
             className
           )}
           {...props}

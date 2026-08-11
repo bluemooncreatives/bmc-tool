@@ -14,7 +14,8 @@
     @apply overflow-x-hidden;
   }
   body {
-    @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar has-[div[data-variant='floating']]:bg-muted/40;
+    @apply min-h-svh w-full bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
   }
 
   /* Override Radix scroll locking for sticky headers */
