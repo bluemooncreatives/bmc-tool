@@ -1,6 +1,7 @@
 import { parseJsonBody, signInSchema } from '@/server/auth-schemas'
 import { createOtpChallenge, maskEmail, OtpError } from '@/server/otp'
 import { hashPassword, verifyPassword } from '@/server/password'
+import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { isActiveStatus, requiresMfa } from '@/server/roles'
 import { startSession } from '@/server/session'
 import { getUsersCollection, normalizeEmail } from '@/server/users'
@@ -24,6 +25,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await enforceRateLimit({
+      request,
+      action: 'sign-in',
+      max: 30,
+      windowSeconds: 15 * 60,
+    })
     const users = await getUsersCollection()
     const user = await users.findOne({ email: normalizeEmail(body.data.email) })
 
@@ -126,6 +133,15 @@ export async function POST(request: Request) {
           headers: error.retryAfter
             ? { 'Retry-After': String(error.retryAfter) }
             : undefined,
+        }
+      )
+    }
+    if (error instanceof RateLimitError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(error.retryAfter) },
         }
       )
     }

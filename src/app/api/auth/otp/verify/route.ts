@@ -6,6 +6,7 @@ import {
   PASSWORD_RESET_COOKIE,
   verifyOtpChallenge,
 } from '@/server/otp'
+import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { isActiveStatus } from '@/server/roles'
 import { startSession } from '@/server/session'
 import { getUsersCollection } from '@/server/users'
@@ -23,6 +24,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await enforceRateLimit({
+      request,
+      action: 'otp-verify',
+      max: 30,
+      windowSeconds: 10 * 60,
+    })
     const challenge = await verifyOtpChallenge(body.data)
 
     if (!challenge.userId) {
@@ -83,6 +90,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: error.message },
         { status: error.status }
+      )
+    }
+    if (error instanceof RateLimitError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(error.retryAfter) },
+        }
       )
     }
     // eslint-disable-next-line no-console

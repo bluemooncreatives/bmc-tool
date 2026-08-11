@@ -1,5 +1,6 @@
 import { parseJsonBody, signUpSchema } from '@/server/auth-schemas'
 import { hashPassword } from '@/server/password'
+import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { startSession } from '@/server/session'
 import {
   getUsersCollection,
@@ -25,6 +26,12 @@ export async function POST(request: Request) {
   const email = normalizeEmail(body.data.email)
 
   try {
+    await enforceRateLimit({
+      request,
+      action: 'sign-up',
+      max: 10,
+      windowSeconds: 60 * 60,
+    })
     const users = await getUsersCollection()
     const now = new Date()
     const user: UserDoc = {
@@ -49,6 +56,15 @@ export async function POST(request: Request) {
       { status: 201 }
     )
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(error.retryAfter) },
+        }
+      )
+    }
     // 11000 is the unique index on email rejecting a duplicate.
     if (
       error instanceof Error &&

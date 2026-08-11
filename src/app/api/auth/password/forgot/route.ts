@@ -1,5 +1,6 @@
 import { emailSchema, parseJsonBody } from '@/server/auth-schemas'
 import { createOtpChallenge, maskEmail, OtpError } from '@/server/otp'
+import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { getUsersCollection, normalizeEmail } from '@/server/users'
 import { NextResponse } from 'next/server'
 
@@ -13,6 +14,12 @@ export async function POST(request: Request) {
 
   const email = normalizeEmail(body.data.email)
   try {
+    await enforceRateLimit({
+      request,
+      action: 'forgot-password',
+      max: 10,
+      windowSeconds: 60 * 60,
+    })
     const users = await getUsersCollection()
     const user = await users.findOne({ email })
     const challenge = await createOtpChallenge({
@@ -40,6 +47,15 @@ export async function POST(request: Request) {
           headers: error.retryAfter
             ? { 'Retry-After': String(error.retryAfter) }
             : undefined,
+        }
+      )
+    }
+    if (error instanceof RateLimitError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(error.retryAfter) },
         }
       )
     }

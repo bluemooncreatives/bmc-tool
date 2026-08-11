@@ -1,5 +1,6 @@
 import { otpResendSchema, parseJsonBody } from '@/server/auth-schemas'
 import { maskEmail, OtpError, resendOtpChallenge } from '@/server/otp'
+import { enforceRateLimit, RateLimitError } from '@/server/rate-limit'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -11,6 +12,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await enforceRateLimit({
+      request,
+      action: 'otp-resend',
+      max: 10,
+      windowSeconds: 60 * 60,
+    })
     const challenge = await resendOtpChallenge(body.data.challengeId)
     return NextResponse.json({
       challengeId: challenge._id.toHexString(),
@@ -27,6 +34,15 @@ export async function POST(request: Request) {
           headers: error.retryAfter
             ? { 'Retry-After': String(error.retryAfter) }
             : undefined,
+        }
+      )
+    }
+    if (error instanceof RateLimitError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(error.retryAfter) },
         }
       )
     }
