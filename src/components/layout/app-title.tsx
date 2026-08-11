@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { MoonStar } from 'lucide-react'
+import { Logo } from '@/assets/logo'
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -18,9 +18,7 @@ export function AppTitle() {
           asChild
         >
           <div>
-            <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
-              <MoonStar className='size-4' />
-            </div>
+            <Logo className='size-8 shrink-0' />
             <Link
               to='/'
               onClick={() => setOpenMobile(false)}
