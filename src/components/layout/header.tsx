@@ -26,19 +26,16 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
   return (
     <header
       className={cn(
-        'z-50 h-16',
+        'z-50 h-[4.5rem] bg-transparent p-2',
         fixed && 'header-fixed peer/header sticky top-0 w-[inherit]',
-        offset > 10 && fixed ? 'shadow' : 'shadow-none',
         className
       )}
       {...props}
     >
       <div
         className={cn(
-          'relative flex h-full items-center gap-3 p-4 sm:gap-4',
-          offset > 10 &&
-            fixed &&
-            'after:absolute after:inset-0 after:-z-10 after:bg-background/20 after:backdrop-blur-lg'
+          'relative flex h-full min-w-0 items-center gap-3 rounded-lg border border-sidebar-border bg-sidebar px-4 text-sidebar-foreground shadow-sm sm:gap-4',
+          offset > 10 && fixed && 'bg-sidebar/90 shadow-md backdrop-blur-lg'
         )}
       >
         <SidebarTrigger variant='outline' className='max-md:scale-125' />

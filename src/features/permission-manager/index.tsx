@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Check, Loader2, Search, ShieldCheck, UserRound } from 'lucide-react'
+import {
+  Check,
+  Loader2,
+  Search as SearchIcon,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { apiFetch, ApiError } from '@/lib/api-client'
 import {
@@ -19,6 +25,7 @@ import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
+import { Search } from '@/components/search'
 
 type ManagedUser = {
   id: string
@@ -158,7 +165,7 @@ export function PermissionManager() {
   return (
     <>
       <Header fixed>
-        <div className='me-auto' />
+        <Search />
         <HeaderActions />
         <ProfileDropdown />
       </Header>
@@ -198,7 +205,7 @@ export function PermissionManager() {
             <CardHeader className='gap-3'>
               <CardTitle className='text-base'>Users</CardTitle>
               <div className='relative'>
-                <Search className='absolute top-2.5 left-3 size-4 text-muted-foreground' />
+                <SearchIcon className='absolute top-2.5 left-3 size-4 text-muted-foreground' />
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}

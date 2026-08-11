@@ -28,7 +28,7 @@ function RouteComponent() {
 
   return (
     <>
-      <Header fixed className='border-b'>
+      <Header fixed>
         <Search />
         <HeaderActions />
         <ProfileDropdown />
