@@ -22,6 +22,18 @@ vi.mock('@/context/theme-provider', () => ({
   useTheme: () => ({ setTheme: mocks.setTheme }),
 }))
 
+vi.mock('@/stores/auth-store', () => ({
+  useAuthStore: (selector: (state: unknown) => unknown) =>
+    selector({
+      auth: {
+        user: {
+          role: ['superadmin'],
+          modulePermissions: [],
+        },
+      },
+    }),
+}))
+
 type ShortcutModifier = 'Control' | 'Meta'
 
 async function renderWithSearchProvider() {
@@ -73,7 +85,7 @@ describe('SearchProvider and CommandMenu', () => {
     await expect.element(getByText('Light')).toBeInTheDocument()
     await expect.element(getByText('Dark')).toBeInTheDocument()
     await expect.element(getByText('System')).toBeInTheDocument()
-    await expect.element(getByText('Dashboard')).toBeInTheDocument()
+    await expect.element(getByText('Home')).toBeInTheDocument()
   })
 
   it('does not show the dialog content when search is closed', async () => {

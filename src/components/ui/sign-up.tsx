@@ -66,7 +66,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             name='password'
             autoComplete='new-password'
             required
-            placeholder='At least 7 characters'
+            placeholder='8+ characters, upper/lowercase and a number'
             disabled={isLoading}
           />
         </AuthField>

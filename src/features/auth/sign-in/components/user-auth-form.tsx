@@ -28,7 +28,7 @@ const formSchema = z.object({
   password: z
     .string()
     .min(1, 'Please enter your password.')
-    .min(7, 'Password must be at least 7 characters long.'),
+    .max(128, 'Password is too long.'),
 })
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {

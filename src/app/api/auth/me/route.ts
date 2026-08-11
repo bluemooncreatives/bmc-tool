@@ -12,7 +12,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 })
     }
 
-    return NextResponse.json({ user: toPublicUser(user) })
+    return NextResponse.json(
+      { user: toPublicUser(user) },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('me lookup failed', error)

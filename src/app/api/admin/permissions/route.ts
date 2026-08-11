@@ -75,7 +75,10 @@ export async function GET(request: Request) {
       .limit(200)
       .toArray()
 
-    return NextResponse.json({ users: results.map(toPermissionUser) })
+    return NextResponse.json(
+      { users: results.map(toPermissionUser) },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
   } catch (error) {
     return errorResponse(error)
   }

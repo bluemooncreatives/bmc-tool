@@ -6,7 +6,7 @@ import { ApiError } from '@/lib/api-client'
 import { SignUpPage } from '@/components/ui/sign-up'
 import { AUTH_HERO_IMAGE } from '@/features/auth/hero'
 
-const MIN_PASSWORD_LENGTH = 7
+const MIN_PASSWORD_LENGTH = 8
 
 export function SignUp() {
   const navigate = useNavigate()
@@ -26,6 +26,11 @@ export function SignUp() {
       setError(
         `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`
       )
+      return
+    }
+
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+      setError('Password must include uppercase, lowercase, and a number.')
       return
     }
 
