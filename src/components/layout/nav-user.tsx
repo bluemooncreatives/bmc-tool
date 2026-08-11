@@ -6,6 +6,10 @@ import {
   LogOut,
 } from 'lucide-react'
 import useDialogState from '@/hooks/use-dialog-state'
+import {
+  hasModulePermission,
+  type PermissionSubject,
+} from '@/lib/permissions'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -30,9 +34,10 @@ type NavUserProps = {
     email: string
     avatar: string
   }
+  permissions: PermissionSubject | null
 }
 
-export function NavUser({ user }: NavUserProps) {
+export function NavUser({ user, permissions }: NavUserProps) {
   const { isMobile } = useSidebar()
   const [open, setOpen] = useDialogState()
 
@@ -76,21 +81,37 @@ export function NavUser({ user }: NavUserProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <Link to='/settings/account'>
-                    <BadgeCheck />
-                    Account
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to='/settings/notifications'>
-                    <Bell />
-                    Notifications
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
+              {permissions &&
+                (hasModulePermission(permissions, 'settings_account') ||
+                  hasModulePermission(
+                    permissions,
+                    'settings_notifications'
+                  )) && (
+                  <>
+                    <DropdownMenuGroup>
+                      {hasModulePermission(permissions, 'settings_account') && (
+                        <DropdownMenuItem asChild>
+                          <Link to='/settings/account'>
+                            <BadgeCheck />
+                            Account
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      {hasModulePermission(
+                        permissions,
+                        'settings_notifications'
+                      ) && (
+                        <DropdownMenuItem asChild>
+                          <Link to='/settings/notifications'>
+                            <Bell />
+                            Notifications
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
               <DropdownMenuItem
                 variant='destructive'
                 onClick={() => setOpen(true)}

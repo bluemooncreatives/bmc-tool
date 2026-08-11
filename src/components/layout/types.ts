@@ -1,4 +1,5 @@
 import { type LinkProps } from '@tanstack/react-router'
+import { type ModuleKey } from '@/lib/permissions'
 
 type User = {
   name: string
@@ -16,6 +17,8 @@ type BaseNavItem = {
   title: string
   badge?: string
   icon?: React.ElementType
+  permission?: ModuleKey
+  superadminOnly?: boolean
 }
 
 type NavLink = BaseNavItem & {

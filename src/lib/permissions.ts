@@ -155,7 +155,10 @@ export function canAccessPath(
   subject: PermissionSubject,
   pathname: string
 ): boolean {
-  if (pathname === '/permission-manager' || pathname.startsWith('/users')) {
+  if (
+    pathname.startsWith('/permission-manager') ||
+    pathname.startsWith('/users')
+  ) {
     return isSuperadmin(subject)
   }
 
