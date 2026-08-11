@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import useDialogState from '@/hooks/use-dialog-state'
+import { useAuthStore } from '@/stores/auth-store'
+import { hasModulePermission } from '@/lib/permissions'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +17,26 @@ import { SignOutDialog } from '@/components/sign-out-dialog'
 
 export function ProfileDropdown() {
   const [open, setOpen] = useDialogState()
+  const user = useAuthStore((state) => state.auth.user)
+  const settingsLinks = user
+    ? [
+        {
+          to: '/settings' as const,
+          label: 'Profile',
+          permission: 'settings_profile' as const,
+        },
+        {
+          to: '/settings/account' as const,
+          label: 'Account',
+          permission: 'settings_account' as const,
+        },
+        {
+          to: '/settings/notifications' as const,
+          label: 'Notifications',
+          permission: 'settings_notifications' as const,
+        },
+      ].filter((item) => hasModulePermission(user, item.permission))
+    : []
 
   return (
     <>
@@ -39,18 +61,18 @@ export function ProfileDropdown() {
               </p>
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link to='/settings'>Profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to='/settings/account'>Account</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to='/settings/notifications'>Notifications</Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+          {settingsLinks.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {settingsLinks.map((item) => (
+                  <DropdownMenuItem key={item.to} asChild>
+                    <Link to={item.to}>{item.label}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem variant='destructive' onClick={() => setOpen(true)}>
             Sign out

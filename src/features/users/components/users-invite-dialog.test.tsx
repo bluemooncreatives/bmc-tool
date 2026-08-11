@@ -71,7 +71,7 @@ describe('UsersInviteDialog', () => {
 
     const roleSelect = getByRole('combobox', { name: /Role/i })
     await userEvent.click(roleSelect)
-    await userEvent.click(getByRole('option', { name: /Superadmin/i }))
+    await userEvent.click(getByRole('option', { name: /Super Admin/i }))
 
     await expect.element(emailErrorMessage).not.toBeInTheDocument()
     await expect.element(roleErrorMessage).not.toBeInTheDocument()
@@ -93,7 +93,7 @@ describe('UsersInviteDialog', () => {
     const { getByRole } = await render(<Harness />)
 
     const EMAIL_VALUE = 'test@example.com'
-    const ROLE_VALUE = 'Superadmin'
+    const ROLE_VALUE = 'Super Admin'
     const DESC_VALUE = 'This is a test description'
 
     const emailInput = getByRole('textbox', { name: /Email/i })
