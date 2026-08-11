@@ -56,10 +56,9 @@ describe('PermissionManager', () => {
 
   it('keeps long selected-user details inside the responsive panel', async () => {
     const screen = await render(<PermissionManager />)
-    const selectedEmail = screen.getAllByText(longEmail).at(-1)
+    const selectedEmail = screen.getByText(longEmail).last()
 
-    expect(selectedEmail).toBeDefined()
-    await expect.element(selectedEmail!).toHaveClass('break-all')
+    await expect.element(selectedEmail).toHaveClass('break-all')
     await expect
       .element(screen.getByText('0 of 14 modules selected'))
       .toBeInTheDocument()
