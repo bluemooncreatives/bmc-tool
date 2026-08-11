@@ -1,53 +1,107 @@
 import { create } from 'zustand'
-import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
+import { apiFetch } from '@/lib/api-client'
 
-const ACCESS_TOKEN = 'thisisjustarandomstring'
-
-interface AuthUser {
+export interface AuthUser {
+  id: string
   accountNo: string
   email: string
   role: string[]
-  exp: number
 }
+
+/**
+ * `pending` means the session has not been resolved against the server yet, so
+ * guards must wait rather than treat the user as signed out.
+ */
+export type AuthStatus = 'pending' | 'authenticated' | 'unauthenticated'
+
+type Credentials = { email: string; password: string }
+/** rememberMe=false keeps the session only until the browser closes. */
+type SignInCredentials = Credentials & { rememberMe?: boolean }
+type SessionResponse = { user: AuthUser }
 
 interface AuthState {
   auth: {
     user: AuthUser | null
+    status: AuthStatus
     setUser: (user: AuthUser | null) => void
-    accessToken: string
-    setAccessToken: (accessToken: string) => void
-    resetAccessToken: () => void
+    /** Resolves the session from the httpOnly cookies. Safe to call repeatedly. */
+    hydrate: () => Promise<AuthUser | null>
+    signIn: (credentials: SignInCredentials) => Promise<AuthUser>
+    signUp: (credentials: Credentials) => Promise<AuthUser>
+    signOut: () => Promise<void>
+    /** Clears local state only — use signOut to also drop the server session. */
     reset: () => void
   }
 }
 
-export const useAuthStore = create<AuthState>()((set) => {
-  const cookieState = getCookie(ACCESS_TOKEN)
-  const initToken = cookieState ? JSON.parse(cookieState) : ''
+/** Shared so concurrent route guards trigger a single /me request. */
+let inFlightHydration: Promise<AuthUser | null> | null = null
+
+export const useAuthStore = create<AuthState>()((set, get) => {
+  function setAuth(patch: Partial<AuthState['auth']>) {
+    set((state) => ({ ...state, auth: { ...state.auth, ...patch } }))
+  }
+
   return {
     auth: {
       user: null,
+      status: 'pending',
+
       setUser: (user) =>
-        set((state) => ({ ...state, auth: { ...state.auth, user } })),
-      accessToken: initToken,
-      setAccessToken: (accessToken) =>
-        set((state) => {
-          setCookie(ACCESS_TOKEN, JSON.stringify(accessToken))
-          return { ...state, auth: { ...state.auth, accessToken } }
+        setAuth({
+          user,
+          status: user ? 'authenticated' : 'unauthenticated',
         }),
-      resetAccessToken: () =>
-        set((state) => {
-          removeCookie(ACCESS_TOKEN)
-          return { ...state, auth: { ...state.auth, accessToken: '' } }
-        }),
-      reset: () =>
-        set((state) => {
-          removeCookie(ACCESS_TOKEN)
-          return {
-            ...state,
-            auth: { ...state.auth, user: null, accessToken: '' },
-          }
-        }),
+
+      hydrate: () => {
+        if (!inFlightHydration) {
+          inFlightHydration = apiFetch<SessionResponse>('/api/auth/me')
+            .then(({ user }) => {
+              get().auth.setUser(user)
+              return user
+            })
+            .catch(() => {
+              // Any failure here — 401, offline, server error — leaves the app
+              // signed out rather than stuck on `pending`.
+              get().auth.setUser(null)
+              return null
+            })
+            .finally(() => {
+              inFlightHydration = null
+            })
+        }
+        return inFlightHydration
+      },
+
+      signIn: async (credentials) => {
+        const { user } = await apiFetch<SessionResponse>('/api/auth/sign-in', {
+          method: 'POST',
+          body: credentials,
+        })
+        get().auth.setUser(user)
+        return user
+      },
+
+      signUp: async (credentials) => {
+        const { user } = await apiFetch<SessionResponse>('/api/auth/sign-up', {
+          method: 'POST',
+          body: credentials,
+        })
+        get().auth.setUser(user)
+        return user
+      },
+
+      signOut: async () => {
+        try {
+          await apiFetch('/api/auth/sign-out', { method: 'POST' })
+        } finally {
+          // Clear locally even if the request failed, so the UI never shows a
+          // signed-in state the user asked to leave.
+          get().auth.reset()
+        }
+      },
+
+      reset: () => setAuth({ user: null, status: 'unauthenticated' }),
     },
   }
 })

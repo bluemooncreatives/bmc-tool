@@ -18,7 +18,7 @@ function ClerkAuthLayout() {
           className='relative z-20 flex items-center text-lg font-medium'
         >
           <Logo className='me-2' />
-          BMC Tool
+          Blue Moon Creatives Tool
         </Link>
 
         <ClerkFullLogo className='relative m-auto size-96' />

@@ -1,58 +1,56 @@
-import { Link, useSearch } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { AuthLayout } from '../auth-layout'
-import { UserAuthForm } from './components/user-auth-form'
+import { useState } from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/auth-store'
+import { ApiError } from '@/lib/api-client'
+import { SignInPage } from '@/components/ui/sign-in'
+import { AUTH_HERO_IMAGE } from '@/features/auth/hero'
 
 export function SignIn() {
   const { redirect } = useSearch({ from: '/(auth)/sign-in' })
+  const navigate = useNavigate()
+  const { auth } = useAuthStore()
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    // Read the form before awaiting — currentTarget is nulled once React
+    // finishes handling the event.
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('email') ?? '')
+    const password = String(formData.get('password') ?? '')
+    const rememberMe = formData.get('rememberMe') !== null
+
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const user = await auth.signIn({ email, password, rememberMe })
+      toast.success(`Welcome back, ${user.email}!`)
+      navigate({ to: redirect || '/', replace: true })
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Could not reach the server. Please try again.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
-    <AuthLayout>
-      <Card className='max-w-sm gap-4'>
-        <CardHeader>
-          <CardTitle className='text-lg tracking-tight'>Sign in</CardTitle>
-          <CardDescription>
-            Enter your email and password below to log into{' '}
-            <br className='max-sm:hidden' /> your account. Don't have an
-            account?{' '}
-            <Link
-              to='/sign-up'
-              className='text-nowrap underline underline-offset-4 hover:text-primary'
-            >
-              Sign Up
-            </Link>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <UserAuthForm redirectTo={redirect} />
-        </CardContent>
-        <CardFooter>
-          <p className='px-8 text-center text-sm text-muted-foreground'>
-            By clicking sign in, you agree to our{' '}
-            <a
-              href='/terms'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a
-              href='/privacy'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
-        </CardFooter>
-      </Card>
-    </AuthLayout>
+    <SignInPage
+      title='Welcome back'
+      description='Sign in to the Blue Moon Creatives operations workspace.'
+      heroImageSrc={AUTH_HERO_IMAGE}
+      error={error}
+      isLoading={isLoading}
+      onSignIn={handleSignIn}
+      onResetPassword={() => navigate({ to: '/forgot-password' })}
+      onCreateAccount={() => navigate({ to: '/sign-up' })}
+    />
   )
 }

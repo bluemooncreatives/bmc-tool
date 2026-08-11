@@ -1,57 +1,67 @@
-import { Link } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { AuthLayout } from '../auth-layout'
-import { SignUpForm } from './components/sign-up-form'
+import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/auth-store'
+import { ApiError } from '@/lib/api-client'
+import { SignUpPage } from '@/components/ui/sign-up'
+import { AUTH_HERO_IMAGE } from '@/features/auth/hero'
+
+const MIN_PASSWORD_LENGTH = 7
 
 export function SignUp() {
+  const navigate = useNavigate()
+  const { auth } = useAuthStore()
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleSignUp(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('email') ?? '')
+    const password = String(formData.get('password') ?? '')
+    const confirmPassword = String(formData.get('confirmPassword') ?? '')
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`
+      )
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.")
+      return
+    }
+
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const user = await auth.signUp({ email, password })
+      toast.success(`Account created for ${user.email}.`)
+      // Sign-up starts a session, so land the new user on the dashboard.
+      navigate({ to: '/', replace: true })
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Could not create the account. Please try again.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <AuthLayout>
-      <Card className='max-w-sm gap-4'>
-        <CardHeader>
-          <CardTitle className='text-lg tracking-tight'>
-            Create an account
-          </CardTitle>
-          <CardDescription>
-            Enter your email and password to create an account. <br />
-            Already have an account?{' '}
-            <Link
-              to='/sign-in'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Sign In
-            </Link>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SignUpForm />
-        </CardContent>
-        <CardFooter>
-          <p className='px-8 text-center text-sm text-muted-foreground'>
-            By creating an account, you agree to our{' '}
-            <a
-              href='/terms'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a
-              href='/privacy'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
-        </CardFooter>
-      </Card>
-    </AuthLayout>
+    <SignUpPage
+      title='Create account'
+      description='Set up your access to the Blue Moon Creatives workspace.'
+      heroImageSrc={AUTH_HERO_IMAGE}
+      error={error}
+      isLoading={isLoading}
+      onSignUp={handleSignUp}
+      onSignIn={() => navigate({ to: '/sign-in' })}
+    />
   )
 }

@@ -1,24 +1,22 @@
-import { type SVGProps } from 'react'
 import { cn } from '@/lib/utils'
 
-export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
+/** Brand mark. Lives in /public so it can also be used as the favicon. */
+export const LOGO_SRC = '/images/bmc-logo.png'
+
+export function Logo({
+  className,
+  alt = 'Blue Moon Creatives Tool',
+  ...props
+}: React.ComponentProps<'img'>) {
   return (
-    <svg
-      id='bmc-tool-logo'
-      viewBox='0 0 24 24'
-      xmlns='http://www.w3.org/2000/svg'
-      height='24'
-      width='24'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      className={cn('size-6', className)}
+    <img
+      id='bmc-logo'
+      src={LOGO_SRC}
+      alt={alt}
+      width={24}
+      height={24}
+      className={cn('size-6 object-contain', className)}
       {...props}
-    >
-      <title>BMC Tool</title>
-      <path d='M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3' />
-    </svg>
+    />
   )
 }

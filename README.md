@@ -1,6 +1,6 @@
 # BMC Internal Tool
 
-BMC Tool is the internal operations workspace for **Blue Moon Creatives**. It brings day-to-day delivery, sales, planning, scheduling, and reporting into one responsive application so the team can work from a shared source of truth.
+Blue Moon Creatives Tool is the internal operations workspace for **Blue Moon Creatives**. It brings day-to-day delivery, sales, planning, scheduling, and reporting into one responsive application so the team can work from a shared source of truth.
 
 ## Product scope
 

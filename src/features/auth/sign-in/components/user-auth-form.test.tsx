@@ -10,14 +10,19 @@ const FORM_MESSAGES = {
 } as const
 
 const navigate = vi.fn()
-const setUserMock = vi.fn()
-const setAccessTokenMock = vi.fn()
+const signInMock = vi.fn(
+  async ({ email }: { email: string; password: string }) => ({
+    id: '65f0000000000000000000aa',
+    accountNo: 'ACC-1',
+    email,
+    role: ['user'],
+  })
+)
 
 vi.mock('@/stores/auth-store', () => ({
   useAuthStore: () => ({
     auth: {
-      setUser: setUserMock,
-      setAccessToken: setAccessTokenMock,
+      signIn: signInMock,
     },
   }),
 }))
@@ -44,10 +49,6 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/utils', async (orig) => ({
-  ...(await orig()),
-  sleep: vi.fn(() => Promise.resolve()),
-}))
 
 describe('UserAuthForm', () => {
   describe('Rendering without redirectTo', () => {
@@ -90,21 +91,26 @@ describe('UserAuthForm', () => {
 
       await userEvent.click(signInButton)
 
-      await vi.waitFor(() => expect(setUserMock).toHaveBeenCalledOnce())
-      expect(setUserMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'a@b.com',
-          accountNo: expect.any(String),
-          role: expect.any(Array),
-          exp: expect.any(Number),
-        })
-      )
-      expect(setAccessTokenMock).toHaveBeenCalledOnce()
-      expect(setAccessTokenMock).toHaveBeenCalledWith('mock-access-token')
+      await vi.waitFor(() => expect(signInMock).toHaveBeenCalledOnce())
+      expect(signInMock).toHaveBeenCalledWith({
+        email: 'a@b.com',
+        password: '1234567',
+      })
 
       await vi.waitFor(() =>
         expect(navigate).toHaveBeenCalledWith({ to: '/', replace: true })
       )
+    })
+
+    it('does not navigate when the credentials are rejected', async () => {
+      signInMock.mockRejectedValueOnce(new Error('Invalid email or password.'))
+
+      await userEvent.fill(emailInput, 'a@b.com')
+      await userEvent.fill(passwordInput, 'wrongpass')
+      await userEvent.click(signInButton)
+
+      await vi.waitFor(() => expect(signInMock).toHaveBeenCalledOnce())
+      expect(navigate).not.toHaveBeenCalled()
     })
   })
 
@@ -120,8 +126,7 @@ describe('UserAuthForm', () => {
 
     await userEvent.click(getByRole('button', { name: /Sign in/i }))
 
-    await vi.waitFor(() => expect(setUserMock).toHaveBeenCalledOnce())
-    expect(setAccessTokenMock).toHaveBeenCalledOnce()
+    await vi.waitFor(() => expect(signInMock).toHaveBeenCalledOnce())
 
     await vi.waitFor(() =>
       expect(navigate).toHaveBeenCalledWith({

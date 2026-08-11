@@ -7,24 +7,16 @@ import { cookies } from 'next/headers'
 
 export const metadata: Metadata = {
   title: {
-    default: 'BMC Tool',
-    template: '%s | BMC Tool',
+    default: 'Blue Moon Creatives Tool',
+    template: '%s | Blue Moon Creatives Tool',
   },
   description:
     'The internal operations workspace for Blue Moon Creatives.',
   icons: {
-    icon: [
-      {
-        url: '/images/favicon.svg',
-        type: 'image/svg+xml',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/images/favicon_light.svg',
-        type: 'image/svg+xml',
-        media: '(prefers-color-scheme: light)',
-      },
-    ],
+    // The blue mark reads on both light and dark tab bars, so one file covers
+    // both schemes.
+    icon: [{ url: '/images/bmc-logo.png', type: 'image/png' }],
+    apple: [{ url: '/images/bmc-logo.png', type: 'image/png' }],
   },
 }
 
