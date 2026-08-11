@@ -3,7 +3,6 @@ import { Monitor, Bell, Palette, Wrench, UserCog } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { hasModulePermission, type ModuleKey } from '@/lib/permissions'
 import { Separator } from '@/components/ui/separator'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -55,9 +54,8 @@ export function Settings() {
     <>
       {/* ===== Top Heading ===== */}
       <Header>
-        <Search className='me-auto' />
+        <Search />
         <HeaderActions />
-        <ConfigDrawer />
         <ProfileDropdown />
       </Header>
 

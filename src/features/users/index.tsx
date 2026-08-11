@@ -1,5 +1,4 @@
 import { getRouteApi } from '@tanstack/react-router'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -20,9 +19,8 @@ export function Users() {
   return (
     <UsersProvider>
       <Header fixed>
-        <Search className='me-auto' />
+        <Search />
         <HeaderActions />
-        <ConfigDrawer />
         <ProfileDropdown />
       </Header>
 

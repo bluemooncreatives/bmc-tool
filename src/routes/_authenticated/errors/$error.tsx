@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { ProfileDropdown } from '@/components/profile-dropdown'
@@ -30,9 +29,8 @@ function RouteComponent() {
   return (
     <>
       <Header fixed className='border-b'>
-        <Search className='me-auto' />
+        <Search />
         <HeaderActions />
-        <ConfigDrawer />
         <ProfileDropdown />
       </Header>
       <div className='flex-1 [&>div]:h-full'>

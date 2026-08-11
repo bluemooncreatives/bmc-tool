@@ -9,7 +9,6 @@ vi.mock('@/lib/api-client', async (original) => ({
   apiFetch: apiFetchMock,
 }))
 
-vi.mock('@/components/config-drawer', () => ({ ConfigDrawer: () => null }))
 vi.mock('@/components/profile-dropdown', () => ({
   ProfileDropdown: () => null,
 }))

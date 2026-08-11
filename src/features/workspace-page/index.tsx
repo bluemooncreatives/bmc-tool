@@ -1,6 +1,5 @@
 import { type LucideIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -23,9 +22,8 @@ export function WorkspacePage({
   return (
     <>
       <Header>
-        <Search className='me-auto' />
+        <Search />
         <HeaderActions />
-        <ConfigDrawer />
         <ProfileDropdown />
       </Header>
 

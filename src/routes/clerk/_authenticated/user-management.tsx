@@ -10,7 +10,6 @@ import { useAuth, UserButton } from '@clerk/react'
 import { ExternalLink, Loader2 } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
 import { Button } from '@/components/ui/button'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { LearnMore } from '@/components/learn-more'
@@ -48,9 +47,8 @@ function UserManagement() {
   return (
     <UsersProvider>
       <Header fixed>
-        <Search className='me-auto' />
+        <Search />
         <ThemeSwitch />
-        <ConfigDrawer />
         <UserButton />
       </Header>
 

@@ -15,7 +15,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -161,7 +160,6 @@ export function PermissionManager() {
       <Header fixed>
         <div className='me-auto' />
         <HeaderActions />
-        <ConfigDrawer />
         <ProfileDropdown />
       </Header>
 
