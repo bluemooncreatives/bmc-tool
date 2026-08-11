@@ -16,7 +16,7 @@ const MOCK_USER: User = {
   email: 'johndoe@shadcn-admin.com',
   phoneNumber: '+959123456789',
   status: 'active',
-  role: 'manager',
+  role: 'user',
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-02-02'),
 }
