@@ -1,15 +1,7 @@
 import { Link } from '@tanstack/react-router'
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  LogOut,
-} from 'lucide-react'
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-react'
+import { hasModulePermission, type PermissionSubject } from '@/lib/permissions'
 import useDialogState from '@/hooks/use-dialog-state'
-import {
-  hasModulePermission,
-  type PermissionSubject,
-} from '@/lib/permissions'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,

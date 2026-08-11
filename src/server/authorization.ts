@@ -1,3 +1,4 @@
+import { hasModulePermission, type ModuleKey } from '@/lib/permissions'
 import { getCurrentUser } from './session'
 import { type UserDoc } from './users'
 
@@ -29,10 +30,7 @@ export async function requireModulePermission(
   const user = await getCurrentUser()
   if (!user) throw new AuthorizationError('Not authenticated.', 401)
   if (!hasModulePermission(user, module)) {
-    throw new AuthorizationError(
-      'You do not have access to this module.',
-      403
-    )
+    throw new AuthorizationError('You do not have access to this module.', 403)
   }
   return user
 }
@@ -52,7 +50,3 @@ export function assertSameOrigin(request: Request): void {
     throw new AuthorizationError('Request origin is not allowed.', 403)
   }
 }
-import {
-  hasModulePermission,
-  type ModuleKey,
-} from '@/lib/permissions'

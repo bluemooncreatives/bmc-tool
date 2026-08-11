@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, Loader2, Search, ShieldCheck, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
+import { apiFetch, ApiError } from '@/lib/api-client'
 import {
   MODULE_DEFINITIONS,
   MODULE_KEYS,
   type ModuleKey,
 } from '@/lib/permissions'
-import { apiFetch, ApiError } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -181,7 +181,11 @@ export function PermissionManager() {
             className='flex items-center justify-between gap-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive'
           >
             <span>{error}</span>
-            <Button variant='outline' size='sm' onClick={() => void loadUsers()}>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => void loadUsers()}
+            >
               Retry
             </Button>
           </div>
@@ -237,7 +241,9 @@ export function PermissionManager() {
                       {user.email}
                     </span>
                   </span>
-                  <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                  <Badge
+                    variant={user.status === 'active' ? 'default' : 'secondary'}
+                  >
                     {user.status}
                   </Badge>
                 </button>
@@ -261,7 +267,9 @@ export function PermissionManager() {
                       {selected.email}
                     </p>
                   </div>
-                  <Badge variant={selected.isSystemOwner ? 'default' : 'outline'}>
+                  <Badge
+                    variant={selected.isSystemOwner ? 'default' : 'outline'}
+                  >
                     {selected.isSystemOwner ? 'Super Admin' : 'User'}
                   </Badge>
                 </CardHeader>
@@ -320,7 +328,9 @@ export function PermissionManager() {
                           <span className='min-w-0'>
                             <span className='flex items-center gap-1.5 font-medium'>
                               {module.title}
-                              {checked && <Check className='size-3.5 text-primary' />}
+                              {checked && (
+                                <Check className='size-3.5 text-primary' />
+                              )}
                             </span>
                             <span className='mt-1 block text-xs leading-relaxed text-muted-foreground'>
                               {module.description}

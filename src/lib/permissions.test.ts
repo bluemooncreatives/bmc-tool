@@ -22,9 +22,7 @@ describe('module permissions', () => {
   it('matches the most specific nested settings module', () => {
     expect(moduleForPath('/settings')).toBe('settings_profile')
     expect(moduleForPath('/settings/account')).toBe('settings_account')
-    expect(moduleForPath('/settings/account/security')).toBe(
-      'settings_account'
-    )
+    expect(moduleForPath('/settings/account/security')).toBe('settings_account')
   })
 
   it('grants the owner every module and the permission manager', () => {

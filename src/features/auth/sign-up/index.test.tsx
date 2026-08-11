@@ -50,8 +50,8 @@ describe('SignUp page', () => {
 
   it('shows a mismatch error and does not submit when passwords differ', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
-    await userEvent.fill(passwordInput, '1234567')
-    await userEvent.fill(confirmPasswordInput, '7654321')
+    await userEvent.fill(passwordInput, 'Secure123')
+    await userEvent.fill(confirmPasswordInput, 'Secure124')
     await userEvent.click(submitButton)
 
     await expect
@@ -60,31 +60,29 @@ describe('SignUp page', () => {
     expect(signUpMock).not.toHaveBeenCalled()
   })
 
-  it('rejects a password shorter than 7 characters', async () => {
+  it('rejects a password shorter than 8 characters', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
-    await userEvent.fill(passwordInput, '123456')
-    await userEvent.fill(confirmPasswordInput, '123456')
+    await userEvent.fill(passwordInput, 'Short1')
+    await userEvent.fill(confirmPasswordInput, 'Short1')
     await userEvent.click(submitButton)
 
     await expect
-      .element(
-        screen.getByText('Password must be at least 7 characters long.')
-      )
+      .element(screen.getByText('Password must be at least 8 characters long.'))
       .toBeInTheDocument()
     expect(signUpMock).not.toHaveBeenCalled()
   })
 
   it('creates the account and navigates to the dashboard', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
-    await userEvent.fill(passwordInput, '1234567')
-    await userEvent.fill(confirmPasswordInput, '1234567')
+    await userEvent.fill(passwordInput, 'Secure123')
+    await userEvent.fill(confirmPasswordInput, 'Secure123')
     await userEvent.click(submitButton)
 
     await vi.waitFor(() => expect(signUpMock).toHaveBeenCalledOnce())
     // confirmPassword is a client-side check only and is not sent.
     expect(signUpMock).toHaveBeenCalledWith({
       email: 'a@b.com',
-      password: '1234567',
+      password: 'Secure123',
     })
 
     await vi.waitFor(() =>
@@ -98,8 +96,8 @@ describe('SignUp page', () => {
     )
 
     await userEvent.fill(emailInput, 'taken@b.com')
-    await userEvent.fill(passwordInput, '1234567')
-    await userEvent.fill(confirmPasswordInput, '1234567')
+    await userEvent.fill(passwordInput, 'Secure123')
+    await userEvent.fill(confirmPasswordInput, 'Secure123')
     await userEvent.click(submitButton)
 
     await vi.waitFor(() => expect(signUpMock).toHaveBeenCalledOnce())

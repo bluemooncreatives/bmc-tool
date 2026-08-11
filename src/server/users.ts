@@ -1,9 +1,6 @@
 import { type Collection, ObjectId } from 'mongodb'
 import { randomBytes } from 'node:crypto'
-import {
-  sanitizeModulePermissions,
-  type ModuleKey,
-} from '@/lib/permissions'
+import { sanitizeModulePermissions, type ModuleKey } from '@/lib/permissions'
 import { getSuperadminEmail, getSuperadminPassword } from './env'
 import { getDb } from './mongodb'
 import { hashPassword } from './password'
@@ -70,11 +67,15 @@ async function prepareUsersCollection(
 ): Promise<void> {
   await users.createIndex({ email: 1 }, { unique: true })
 
+  const now = new Date()
+  const email = normalizeEmail(getSuperadminEmail())
+
   // Normalize documents from the dashboard template. Access remains
-  // deny-by-default until the owner grants individual modules.
+  // deny-by-default until the owner grants individual modules. The configured
+  // owner address is the only document allowed to retain superadmin authority.
   await users.updateMany(
-    { role: { $ne: 'superadmin' } },
-    { $set: { role: ['user'] } }
+    { email: { $ne: email } },
+    { $set: { role: ['user'], isSystemOwner: false } }
   )
   await users.updateMany(
     { modulePermissions: { $exists: false } },
@@ -93,8 +94,6 @@ async function prepareUsersCollection(
     { $set: { failedSignInAttempts: 0 } }
   )
 
-  const now = new Date()
-  const email = normalizeEmail(getSuperadminEmail())
   const bootstrapPassword =
     getSuperadminPassword() ?? randomBytes(32).toString('base64url')
 
@@ -116,12 +115,12 @@ async function prepareUsersCollection(
       },
       $set: {
         email,
+        role: ['superadmin'],
         status: 'active',
         mfaEnabled: true,
         isSystemOwner: true,
         updatedAt: now,
       },
-      $addToSet: { role: 'superadmin' },
     },
     { upsert: true }
   )

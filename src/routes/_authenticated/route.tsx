@@ -19,7 +19,6 @@ export const Route = createFileRoute('/_authenticated')({
       })
     }
 
-
     if (!canAccessPath(user, location.pathname)) {
       throw redirect({ to: '/403' })
     }

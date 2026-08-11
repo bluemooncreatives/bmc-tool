@@ -101,9 +101,10 @@ export const MODULE_DEFINITIONS = [
 
 export type ModuleKey = (typeof MODULE_DEFINITIONS)[number]['key']
 
-export const MODULE_KEYS = MODULE_DEFINITIONS.map(
-  (module) => module.key
-) as [ModuleKey, ...ModuleKey[]]
+export const MODULE_KEYS = MODULE_DEFINITIONS.map((module) => module.key) as [
+  ModuleKey,
+  ...ModuleKey[],
+]
 
 export type PermissionSubject = {
   role: readonly string[]

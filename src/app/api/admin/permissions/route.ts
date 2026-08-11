@@ -1,18 +1,15 @@
-import { ObjectId, type Filter } from 'mongodb'
-import { NextResponse } from 'next/server'
-import {
-  MODULE_KEYS,
-  sanitizeModulePermissions,
-} from '@/lib/permissions'
+import { parseJsonBody } from '@/server/auth-schemas'
 import {
   assertSameOrigin,
   AuthorizationError,
   requireSuperadmin,
 } from '@/server/authorization'
-import { parseJsonBody } from '@/server/auth-schemas'
 import { recordPermissionAudit } from '@/server/permission-audit'
 import { updatePermissionsSchema } from '@/server/permission-schemas'
 import { getUsersCollection, type UserDoc } from '@/server/users'
+import { ObjectId, type Filter } from 'mongodb'
+import { NextResponse } from 'next/server'
+import { MODULE_KEYS, sanitizeModulePermissions } from '@/lib/permissions'
 
 export const runtime = 'nodejs'
 
@@ -38,10 +35,7 @@ function toPermissionUser(user: UserDoc) {
 
 function errorResponse(error: unknown) {
   if (error instanceof AuthorizationError) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: error.status }
-    )
+    return NextResponse.json({ error: error.message }, { status: error.status })
   }
   // eslint-disable-next-line no-console
   console.error('permission manager request failed', error)

@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/server/session'
 import { toPublicUser } from '@/server/users'
+import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 

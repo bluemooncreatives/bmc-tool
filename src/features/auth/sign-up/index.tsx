@@ -29,7 +29,11 @@ export function SignUp() {
       return
     }
 
-    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+    if (
+      !/[a-z]/.test(password) ||
+      !/[A-Z]/.test(password) ||
+      !/\d/.test(password)
+    ) {
       setError('Password must include uppercase, lowercase, and a number.')
       return
     }
