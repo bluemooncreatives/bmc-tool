@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { cn } from '@/lib/utils'
 import { showSubmittedData } from '@/lib/show-submitted-data'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +25,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { SelectDropdown } from '@/components/select-dropdown'
+import { resolveOptions } from '../data/data'
 import { type Task } from '../data/schema'
+import { useTaskOptionsStore } from '../stores/task-options-store'
 
 type TaskMutateDrawerProps = {
   open: boolean
@@ -32,12 +36,17 @@ type TaskMutateDrawerProps = {
 }
 
 const formSchema = z.object({
+  id: z.string().min(1, 'Task number is required.'),
   title: z.string().min(1, 'Title is required.'),
   status: z.string().min(1, 'Please select a status.'),
   label: z.string().min(1, 'Please select a label.'),
   priority: z.string().min(1, 'Please choose a priority.'),
 })
 type TaskForm = z.infer<typeof formSchema>
+
+function generateTaskNumber() {
+  return `TASK-${Math.floor(1000 + Math.random() * 9000)}`
+}
 
 export function TasksMutateDrawer({
   open,
@@ -46,15 +55,37 @@ export function TasksMutateDrawer({
 }: TaskMutateDrawerProps) {
   const isUpdate = !!currentRow
 
+  const storeLabels = useTaskOptionsStore((s) => s.labels)
+  const storeStatuses = useTaskOptionsStore((s) => s.statuses)
+  const storePriorities = useTaskOptionsStore((s) => s.priorities)
+  const labels = resolveOptions(storeLabels)
+  const statuses = resolveOptions(storeStatuses)
+  const priorities = resolveOptions(storePriorities)
+
   const form = useForm<TaskForm>({
     resolver: zodResolver(formSchema),
     defaultValues: currentRow ?? {
+      id: generateTaskNumber(),
       title: '',
       status: '',
       label: '',
       priority: '',
     },
   })
+
+  useEffect(() => {
+    if (!open) return
+    form.reset(
+      currentRow ?? {
+        id: generateTaskNumber(),
+        title: '',
+        status: '',
+        label: '',
+        priority: '',
+      }
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, currentRow])
 
   const onSubmit = (data: TaskForm) => {
     // do something with the form data
@@ -89,6 +120,19 @@ export function TasksMutateDrawer({
           >
             <FormField
               control={form.control}
+              name='id'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Task Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder='e.g. TASK-1234' />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name='title'
               render={({ field }) => (
                 <FormItem>
@@ -109,14 +153,8 @@ export function TasksMutateDrawer({
                   <SelectDropdown
                     defaultValue={field.value}
                     onValueChange={field.onChange}
-                    placeholder='Select dropdown'
-                    items={[
-                      { label: 'In Progress', value: 'in progress' },
-                      { label: 'Backlog', value: 'backlog' },
-                      { label: 'Todo', value: 'todo' },
-                      { label: 'Canceled', value: 'canceled' },
-                      { label: 'Done', value: 'done' },
-                    ]}
+                    placeholder='Select status'
+                    items={statuses}
                   />
                   <FormMessage />
                 </FormItem>
@@ -134,26 +172,24 @@ export function TasksMutateDrawer({
                       defaultValue={field.value}
                       className='flex flex-col space-y-1'
                     >
-                      <FormItem className='flex items-center'>
-                        <FormControl>
-                          <RadioGroupItem value='documentation' />
-                        </FormControl>
-                        <FormLabel className='font-normal'>
-                          Documentation
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className='flex items-center'>
-                        <FormControl>
-                          <RadioGroupItem value='feature' />
-                        </FormControl>
-                        <FormLabel className='font-normal'>Feature</FormLabel>
-                      </FormItem>
-                      <FormItem className='flex items-center'>
-                        <FormControl>
-                          <RadioGroupItem value='bug' />
-                        </FormControl>
-                        <FormLabel className='font-normal'>Bug</FormLabel>
-                      </FormItem>
+                      {labels.map((label) => (
+                        <FormItem
+                          key={label.value}
+                          className='flex items-center'
+                        >
+                          <FormControl>
+                            <RadioGroupItem value={label.value} />
+                          </FormControl>
+                          <FormLabel className='flex items-center gap-1.5 font-normal'>
+                            {label.icon && (
+                              <label.icon
+                                className={cn('size-4', label.color)}
+                              />
+                            )}
+                            {label.label}
+                          </FormLabel>
+                        </FormItem>
+                      ))}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
@@ -172,24 +208,24 @@ export function TasksMutateDrawer({
                       defaultValue={field.value}
                       className='flex flex-col space-y-1'
                     >
-                      <FormItem className='flex items-center'>
-                        <FormControl>
-                          <RadioGroupItem value='high' />
-                        </FormControl>
-                        <FormLabel className='font-normal'>High</FormLabel>
-                      </FormItem>
-                      <FormItem className='flex items-center'>
-                        <FormControl>
-                          <RadioGroupItem value='medium' />
-                        </FormControl>
-                        <FormLabel className='font-normal'>Medium</FormLabel>
-                      </FormItem>
-                      <FormItem className='flex items-center'>
-                        <FormControl>
-                          <RadioGroupItem value='low' />
-                        </FormControl>
-                        <FormLabel className='font-normal'>Low</FormLabel>
-                      </FormItem>
+                      {priorities.map((priority) => (
+                        <FormItem
+                          key={priority.value}
+                          className='flex items-center'
+                        >
+                          <FormControl>
+                            <RadioGroupItem value={priority.value} />
+                          </FormControl>
+                          <FormLabel className='flex items-center gap-1.5 font-normal'>
+                            {priority.icon && (
+                              <priority.icon
+                                className={cn('size-4', priority.color)}
+                              />
+                            )}
+                            {priority.label}
+                          </FormLabel>
+                        </FormItem>
+                      ))}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />

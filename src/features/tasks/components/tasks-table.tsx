@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
 import {
   type SortingState,
@@ -23,10 +23,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { priorities, statuses } from '../data/data'
+import { resolveOptions } from '../data/data'
 import { type Task } from '../data/schema'
+import { useTaskOptionsStore } from '../stores/task-options-store'
 import { DataTableBulkActions } from './data-table-bulk-actions'
-import { tasksColumns as columns } from './tasks-columns'
+import { getTasksColumns } from './tasks-columns'
 
 const route = getRouteApi('/_authenticated/tasks/')
 
@@ -39,6 +40,20 @@ export function TasksTable({ data }: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+
+  const storeLabels = useTaskOptionsStore((s) => s.labels)
+  const storeStatuses = useTaskOptionsStore((s) => s.statuses)
+  const storePriorities = useTaskOptionsStore((s) => s.priorities)
+  const labels = useMemo(() => resolveOptions(storeLabels), [storeLabels])
+  const statuses = useMemo(() => resolveOptions(storeStatuses), [storeStatuses])
+  const priorities = useMemo(
+    () => resolveOptions(storePriorities),
+    [storePriorities]
+  )
+  const columns = useMemo(
+    () => getTasksColumns({ labels, statuses, priorities }),
+    [labels, statuses, priorities]
+  )
 
   // Local state management for table (uncomment to use local-only state, not synced with URL)
   // const [globalFilter, onGlobalFilterChange] = useState('')
@@ -60,6 +75,7 @@ export function TasksTable({ data }: DataTableProps) {
     pagination: { defaultPage: 1, defaultPageSize: 10 },
     globalFilter: { enabled: true, key: 'filter' },
     columnFilters: [
+      { columnId: 'label', searchKey: 'label', type: 'array' },
       { columnId: 'status', searchKey: 'status', type: 'array' },
       { columnId: 'priority', searchKey: 'priority', type: 'array' },
     ],
@@ -115,6 +131,11 @@ export function TasksTable({ data }: DataTableProps) {
         table={table}
         searchPlaceholder='Filter by title or ID...'
         filters={[
+          {
+            columnId: 'label',
+            title: 'Label',
+            options: labels,
+          },
           {
             columnId: 'status',
             title: 'Status',

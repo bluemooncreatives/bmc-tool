@@ -104,6 +104,7 @@ describe('TasksMutateDrawer', () => {
 
     expect(showSubmittedData).toHaveBeenCalledOnce()
     expect(showSubmittedData).toHaveBeenCalledWith({
+      id: expect.stringMatching(/^TASK-\d{4}$/),
       title: 'New task title',
       status: 'todo',
       label: 'bug',

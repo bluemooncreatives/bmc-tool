@@ -1,5 +1,6 @@
 import { showSubmittedData } from '@/lib/show-submitted-data'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { ManageTaskOptionsDialog } from './manage-task-options-dialog'
 import { TasksImportDialog } from './tasks-import-dialog'
 import { TasksMutateDrawer } from './tasks-mutate-drawer'
 import { useTasks } from './tasks-provider'
@@ -18,6 +19,12 @@ export function TasksDialogs() {
         key='tasks-import'
         open={open === 'import'}
         onOpenChange={() => setOpen('import')}
+      />
+
+      <ManageTaskOptionsDialog
+        key='task-manage-options'
+        open={open === 'manage-options'}
+        onOpenChange={() => setOpen('manage-options')}
       />
 
       {currentRow && (

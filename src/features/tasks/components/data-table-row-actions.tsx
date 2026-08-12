@@ -15,8 +15,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { labels } from '../data/data'
 import { taskSchema } from '../data/schema'
+import { useTaskOptionsStore } from '../stores/task-options-store'
 import { useTasks } from './tasks-provider'
 
 type DataTableRowActionsProps<TData> = {
@@ -29,6 +29,7 @@ export function DataTableRowActions<TData>({
   const task = taskSchema.parse(row.original)
 
   const { setOpen, setCurrentRow } = useTasks()
+  const labels = useTaskOptionsStore((s) => s.labels)
 
   return (
     <DropdownMenu modal={false}>

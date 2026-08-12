@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { type Table } from '@tanstack/react-table'
 import { Trash2, CircleArrowUp, ArrowUpDown, Download } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { cn, sleep } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,8 +16,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { DataTableBulkActions as BulkActionsToolbar } from '@/components/data-table'
-import { priorities, statuses } from '../data/data'
+import { resolveOptions } from '../data/data'
 import { type Task } from '../data/schema'
+import { useTaskOptionsStore } from '../stores/task-options-store'
 import { TasksMultiDeleteDialog } from './tasks-multi-delete-dialog'
 
 type DataTableBulkActionsProps<TData> = {
@@ -29,6 +30,8 @@ export function DataTableBulkActions<TData>({
 }: DataTableBulkActionsProps<TData>) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const selectedRows = table.getFilteredSelectedRowModel().rows
+  const statuses = resolveOptions(useTaskOptionsStore((s) => s.statuses))
+  const priorities = resolveOptions(useTaskOptionsStore((s) => s.priorities))
 
   const handleBulkStatusChange = (status: string) => {
     const selectedTasks = selectedRows.map((row) => row.original as Task)
@@ -100,7 +103,7 @@ export function DataTableBulkActions<TData>({
                 onClick={() => handleBulkStatusChange(status.value)}
               >
                 {status.icon && (
-                  <status.icon className='size-4 text-muted-foreground' />
+                  <status.icon className={cn('size-4', status.color)} />
                 )}
                 {status.label}
               </DropdownMenuItem>
@@ -136,7 +139,7 @@ export function DataTableBulkActions<TData>({
                 onClick={() => handleBulkPriorityChange(priority.value)}
               >
                 {priority.icon && (
-                  <priority.icon className='size-4 text-muted-foreground' />
+                  <priority.icon className={cn('size-4', priority.color)} />
                 )}
                 {priority.label}
               </DropdownMenuItem>

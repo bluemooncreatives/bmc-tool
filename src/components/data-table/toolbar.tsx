@@ -16,6 +16,7 @@ type DataTableToolbarProps<TData> = {
       label: string
       value: string
       icon?: React.ComponentType<{ className?: string }>
+      color?: string
     }[]
   }[]
 }

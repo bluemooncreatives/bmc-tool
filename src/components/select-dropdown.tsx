@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { Loader } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FormControl } from '@/components/ui/form'
@@ -14,7 +15,14 @@ type SelectDropdownProps = {
   defaultValue: string | undefined
   placeholder?: string
   isPending?: boolean
-  items: { label: string; value: string }[] | undefined
+  items:
+    | {
+        label: string
+        value: string
+        icon?: React.ComponentType<{ className?: string }>
+        color?: string
+      }[]
+    | undefined
   disabled?: boolean
   className?: string
   isControlled?: boolean
@@ -50,9 +58,12 @@ export function SelectDropdown({
             </div>
           </SelectItem>
         ) : (
-          items?.map(({ label, value }) => (
+          items?.map(({ label, value, icon: Icon, color }) => (
             <SelectItem key={value} value={value}>
-              {label}
+              <div className='flex items-center gap-2'>
+                {Icon && <Icon className={cn('size-4', color)} />}
+                {label}
+              </div>
             </SelectItem>
           ))
         )}
