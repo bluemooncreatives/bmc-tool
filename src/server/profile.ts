@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import {
+  isSupportedLanguage,
+  isValidDateOfBirth,
+  type SupportedLanguage,
+} from '@/lib/account-profile'
 import { normalizeEmail, normalizeUsername } from './identity'
 import { type UserDoc } from './users'
 
@@ -35,9 +40,22 @@ const httpUrlSchema = z
   })
 
 export const profileUpdateSchema = z.object({
+  name: z
+    .string('Please enter your name.')
+    .trim()
+    .min(2, 'Name must be at least 2 characters.')
+    .max(80, 'Name must not be longer than 80 characters.'),
   username: usernameSchema,
   displayEmail: z.email('Please select a valid email address.'),
   bio: z.string().trim().max(160, 'Bio must not exceed 160 characters.'),
+  dateOfBirth: z
+    .string('Please select your date of birth.')
+    .refine(isValidDateOfBirth, {
+      message: 'Select a valid date of birth between 1900 and today.',
+    }),
+  language: z.custom<SupportedLanguage>(isSupportedLanguage, {
+    message: 'Please select a supported language.',
+  }),
   urls: z
     .array(httpUrlSchema)
     .max(MAX_PROFILE_URLS, `You can add up to ${MAX_PROFILE_URLS} URLs.`)
@@ -93,10 +111,15 @@ export function serializeProfile(user: UserDoc) {
         },
       ]
   return {
+    name:
+      user.name ??
+      [user.firstName, user.lastName].filter(Boolean).join(' ').trim(),
     username: user.username,
     canonicalEmail: user.email,
     displayEmail: user.displayEmail ?? user.email,
     bio: user.bio ?? '',
+    dateOfBirth: user.dateOfBirth ?? '',
+    language: user.language ?? '',
     urls: user.urls ?? [],
     emails: emails.map((entry) => ({
       address: entry.address,

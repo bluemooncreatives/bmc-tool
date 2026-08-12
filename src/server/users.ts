@@ -1,5 +1,6 @@
 import { type Collection, ObjectId } from 'mongodb'
 import { createHash, randomBytes } from 'node:crypto'
+import { type SupportedLanguage } from '@/lib/account-profile'
 import { sanitizeModulePermissions, type ModuleKey } from '@/lib/permissions'
 import { getSuperadminEmail, getSuperadminPassword } from './env'
 import { normalizeEmail, normalizeUsername } from './identity'
@@ -15,6 +16,9 @@ export type UserDoc = {
   /** Lower-cased username used only for case-insensitive uniqueness. */
   usernameKey: string
   usernameChangedAt?: Date
+  name?: string
+  dateOfBirth?: string
+  language?: SupportedLanguage
   bio?: string
   urls?: string[]
   emails: UserEmail[]
@@ -54,6 +58,7 @@ export type PublicUser = {
   email: string
   username: string
   displayEmail: string
+  name?: string
   hiddenSidebarItems: ModuleKey[]
   role: Role[]
   status: UserStatus
@@ -70,6 +75,10 @@ export function toPublicUser(user: UserDoc): PublicUser {
     email: user.email,
     username: user.username,
     displayEmail: user.displayEmail ?? user.email,
+    name:
+      user.name ??
+      ([user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+        undefined),
     hiddenSidebarItems: sanitizeModulePermissions(user.hiddenSidebarItems),
     role: sanitizeRoles(user.role),
     status: user.status ?? 'active',
@@ -84,7 +93,9 @@ export { normalizeEmail, normalizeUsername } from './identity'
 
 /** "First Last", falling back to the email when no name is on file. */
 export function getUserDisplayName(user: UserDoc): string {
-  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
+  const name =
+    user.name ??
+    [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
   return name || user.username || user.email
 }
 

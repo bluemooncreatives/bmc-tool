@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   canAccessPath,
   hasModulePermission,
+  hasAccountSettingsAccess,
   moduleForPath,
   sanitizeModulePermissions,
 } from './permissions'
@@ -23,6 +24,12 @@ describe('module permissions', () => {
     expect(moduleForPath('/settings')).toBe('settings_profile')
     expect(moduleForPath('/settings/account')).toBe('settings_account')
     expect(moduleForPath('/settings/account/security')).toBe('settings_account')
+  })
+
+  it('keeps legacy account-only access valid for the unified page', () => {
+    expect(hasAccountSettingsAccess(user)).toBe(true)
+    expect(canAccessPath(user, '/settings')).toBe(true)
+    expect(canAccessPath(user, '/settings/account')).toBe(true)
   })
 
   it('grants the owner every module and the permission manager', () => {

@@ -16,10 +16,13 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 const profile: AccountProfile = {
+  name: 'Member',
   username: 'member',
   canonicalEmail: 'member@example.com',
   displayEmail: 'member@example.com',
   bio: '',
+  dateOfBirth: '1995-06-15',
+  language: 'en',
   urls: [],
   emails: [
     {

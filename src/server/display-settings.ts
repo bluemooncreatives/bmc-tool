@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   hasModulePermission,
+  hasAccountSettingsAccess,
   isModuleKey,
   MODULE_DEFINITIONS,
   sanitizeModulePermissions,
@@ -29,8 +30,12 @@ export const displaySettingsSchema = z.object({
 })
 
 export function availableSidebarItems(user: UserDoc) {
-  return MODULE_DEFINITIONS.filter((item) =>
-    hasModulePermission(user, item.key)
+  return MODULE_DEFINITIONS.filter(
+    (item) =>
+      item.key !== 'settings_account' &&
+      (item.key === 'settings_profile'
+        ? hasAccountSettingsAccess(user)
+        : hasModulePermission(user, item.key))
   ).map((item) => ({
     id: item.key,
     label: item.title,

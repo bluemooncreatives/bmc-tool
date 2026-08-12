@@ -11,14 +11,19 @@ function canSee(
   hiddenPermissions: ReadonlySet<string>
 ): boolean {
   if (item.superadminOnly && !isSuperadmin(subject)) return false
+  const permissions =
+    item.permissionAnyOf ?? (item.permission ? [item.permission] : [])
   if (
-    item.permission &&
-    item.permission !== 'settings_display' &&
-    hiddenPermissions.has(item.permission)
+    permissions.length > 0 &&
+    !permissions.includes('settings_display') &&
+    permissions.some((permission) => hiddenPermissions.has(permission))
   ) {
     return false
   }
-  return !item.permission || hasModulePermission(subject, item.permission)
+  return (
+    permissions.length === 0 ||
+    permissions.some((permission) => hasModulePermission(subject, permission))
+  )
 }
 
 export function filterNavGroups(

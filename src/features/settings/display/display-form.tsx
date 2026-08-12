@@ -3,10 +3,12 @@ import { Eye, Loader2, RotateCcw, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { ApiError, apiFetch } from '@/lib/api-client'
+import { type ModuleKey } from '@/lib/permissions'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { MODULE_ICONS } from '@/components/app-icons'
 import {
   type DisplayPreferences,
   type DisplayPreferencesResponse,
@@ -23,7 +25,7 @@ export function DisplayForm() {
   const [preferences, setPreferences] = useState<DisplayPreferences | null>(
     null
   )
-  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [selectedItems, setSelectedItems] = useState<ModuleKey[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export function DisplayForm() {
     return [...new Set(preferences.availableItems.map((item) => item.group))]
   }, [preferences])
 
-  function setItemVisible(id: string, visible: boolean, required: boolean) {
+  function setItemVisible(id: ModuleKey, visible: boolean, required: boolean) {
     if (required) return
     setSelectedItems((current) => {
       const next = new Set(current)
@@ -186,6 +188,7 @@ export function DisplayForm() {
               .filter((item) => item.group === group)
               .map((item) => {
                 const checked = item.required || selectedItems.includes(item.id)
+                const ItemIcon = MODULE_ICONS[item.id]
                 return (
                   <Label
                     key={item.id}
@@ -200,6 +203,9 @@ export function DisplayForm() {
                         setItemVisible(item.id, value === true, item.required)
                       }
                     />
+                    <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                      <ItemIcon className='size-4' aria-hidden='true' />
+                    </span>
                     <span className='min-w-0 flex-1'>
                       <span className='flex items-center gap-2 text-sm font-medium'>
                         {item.label}

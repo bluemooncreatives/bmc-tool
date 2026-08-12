@@ -21,6 +21,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { MODULE_ICONS } from '@/components/app-icons'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -321,6 +322,7 @@ export function PermissionManager() {
                     {MODULE_DEFINITIONS.map((module) => {
                       const checked =
                         selected.isSystemOwner || draft.includes(module.key)
+                      const ModuleIcon = MODULE_ICONS[module.key]
                       return (
                         <Label
                           key={module.key}
@@ -339,6 +341,9 @@ export function PermissionManager() {
                               togglePermission(module.key, value === true)
                             }
                           />
+                          <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                            <ModuleIcon className='size-4' aria-hidden='true' />
+                          </span>
                           <span className='min-w-0 flex-1'>
                             <span className='flex min-w-0 items-center gap-1.5 font-medium'>
                               {module.title}

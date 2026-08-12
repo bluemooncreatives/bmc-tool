@@ -57,8 +57,8 @@ export const MODULE_DEFINITIONS = [
   },
   {
     key: 'settings_profile',
-    title: 'Profile settings',
-    description: 'Personal profile configuration.',
+    title: 'Profile & account settings',
+    description: 'Identity, contact, and account preferences.',
     path: '/settings',
     group: 'Settings',
   },
@@ -137,6 +137,13 @@ export function hasModulePermission(
   )
 }
 
+export function hasAccountSettingsAccess(subject: PermissionSubject): boolean {
+  return (
+    hasModulePermission(subject, 'settings_profile') ||
+    hasModulePermission(subject, 'settings_account')
+  )
+}
+
 /** Resolves nested routes by longest prefix so /settings/account beats /settings. */
 export function moduleForPath(pathname: string): ModuleKey | null {
   if (pathname === '/') return 'home'
@@ -161,6 +168,10 @@ export function canAccessPath(
     pathname.startsWith('/users')
   ) {
     return isSuperadmin(subject)
+  }
+
+  if (pathname === '/settings' || pathname === '/settings/account') {
+    return hasAccountSettingsAccess(subject)
   }
 
   const module = moduleForPath(pathname)

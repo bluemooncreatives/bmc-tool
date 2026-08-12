@@ -18,6 +18,7 @@ type BaseNavItem = {
   badge?: string
   icon?: React.ElementType
   permission?: ModuleKey
+  permissionAnyOf?: ModuleKey[]
   superadminOnly?: boolean
 }
 

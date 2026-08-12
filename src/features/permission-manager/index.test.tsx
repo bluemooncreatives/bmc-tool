@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { PermissionManager } from '.'
 
-const apiFetchMock = vi.fn()
+const apiFetchMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/api-client', async (original) => ({
   ...(await original()),
@@ -13,6 +13,10 @@ vi.mock('@/components/profile-dropdown', () => ({
   ProfileDropdown: () => null,
 }))
 vi.mock('@/components/header-actions', () => ({ HeaderActions: () => null }))
+vi.mock('@/components/layout/header', () => ({
+  Header: ({ children }: { children: React.ReactNode }) => children,
+}))
+vi.mock('@/components/search', () => ({ Search: () => null }))
 
 const longEmail =
   'a-very-long-permission-manager-address@a-very-long-example-domain.com'

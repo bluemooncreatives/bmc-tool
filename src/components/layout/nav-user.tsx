@@ -1,6 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-react'
-import { hasModulePermission, type PermissionSubject } from '@/lib/permissions'
+import {
+  hasAccountSettingsAccess,
+  hasModulePermission,
+  type PermissionSubject,
+} from '@/lib/permissions'
 import useDialogState from '@/hooks/use-dialog-state'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -74,18 +78,18 @@ export function NavUser({ user, permissions }: NavUserProps) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {permissions &&
-                (hasModulePermission(permissions, 'settings_account') ||
+                (hasAccountSettingsAccess(permissions) ||
                   hasModulePermission(
                     permissions,
                     'settings_notifications'
                   )) && (
                   <>
                     <DropdownMenuGroup>
-                      {hasModulePermission(permissions, 'settings_account') && (
+                      {hasAccountSettingsAccess(permissions) && (
                         <DropdownMenuItem asChild>
-                          <Link to='/settings/account'>
+                          <Link to='/settings'>
                             <BadgeCheck />
-                            Account
+                            Profile & Account
                           </Link>
                         </DropdownMenuItem>
                       )}

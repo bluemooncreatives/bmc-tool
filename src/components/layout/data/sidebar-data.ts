@@ -1,22 +1,8 @@
+import { Settings, MoonStar } from 'lucide-react'
 import {
-  Monitor,
-  ListTodo,
-  HelpCircle,
-  Bell,
-  Palette,
-  Settings,
-  Wrench,
-  UserCog,
-  Home,
-  ContactRound,
-  FileText,
-  CalendarDays,
-  Map,
-  Clock3,
-  ChartNoAxesCombined,
-  MoonStar,
-  ShieldCheck,
-} from 'lucide-react'
+  MODULE_ICONS,
+  NOTIFICATION_CATEGORY_ICONS,
+} from '@/components/app-icons'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -39,49 +25,49 @@ export const sidebarData: SidebarData = {
         {
           title: 'Home',
           url: '/',
-          icon: Home,
+          icon: MODULE_ICONS.home,
           permission: 'home',
         },
         {
           title: 'Tasks',
           url: '/tasks',
-          icon: ListTodo,
+          icon: MODULE_ICONS.tasks,
           permission: 'tasks',
         },
         {
           title: 'Leads',
           url: '/leads',
-          icon: ContactRound,
+          icon: MODULE_ICONS.leads,
           permission: 'leads',
         },
         {
           title: 'Quotations',
           url: '/quotations',
-          icon: FileText,
+          icon: MODULE_ICONS.quotations,
           permission: 'quotations',
         },
         {
           title: 'Calendars',
           url: '/calenders',
-          icon: CalendarDays,
+          icon: MODULE_ICONS.calendars,
           permission: 'calendars',
         },
         {
           title: 'Plans',
           url: '/plans',
-          icon: Map,
+          icon: MODULE_ICONS.plans,
           permission: 'plans',
         },
         {
           title: 'Schedule',
           url: '/schedule',
-          icon: Clock3,
+          icon: MODULE_ICONS.schedule,
           permission: 'schedule',
         },
         {
           title: 'Reports & Analytics',
           url: '/reports-analytics',
-          icon: ChartNoAxesCombined,
+          icon: MODULE_ICONS.reports_analytics,
           permission: 'reports_analytics',
         },
       ],
@@ -94,33 +80,28 @@ export const sidebarData: SidebarData = {
           icon: Settings,
           items: [
             {
-              title: 'Profile',
+              title: 'Profile & Account',
               url: '/settings',
-              icon: UserCog,
+              icon: MODULE_ICONS.settings_profile,
               permission: 'settings_profile',
-            },
-            {
-              title: 'Account',
-              url: '/settings/account',
-              icon: Wrench,
-              permission: 'settings_account',
+              permissionAnyOf: ['settings_profile', 'settings_account'],
             },
             {
               title: 'Appearance',
               url: '/settings/appearance',
-              icon: Palette,
+              icon: MODULE_ICONS.settings_appearance,
               permission: 'settings_appearance',
             },
             {
               title: 'Notifications',
               url: '/settings/notifications',
-              icon: Bell,
+              icon: MODULE_ICONS.settings_notifications,
               permission: 'settings_notifications',
             },
             {
               title: 'Display',
               url: '/settings/display',
-              icon: Monitor,
+              icon: MODULE_ICONS.settings_display,
               permission: 'settings_display',
             },
           ],
@@ -128,7 +109,7 @@ export const sidebarData: SidebarData = {
         {
           title: 'Help Center',
           url: '/help-center',
-          icon: HelpCircle,
+          icon: MODULE_ICONS.help_center,
           permission: 'help_center',
         },
       ],
@@ -139,7 +120,7 @@ export const sidebarData: SidebarData = {
         {
           title: 'Permission Manager',
           url: '/permission-manager',
-          icon: ShieldCheck,
+          icon: NOTIFICATION_CATEGORY_ICONS.permissions,
           superadminOnly: true,
         },
       ],

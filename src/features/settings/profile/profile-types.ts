@@ -5,10 +5,13 @@ export type ProfileEmail = {
 }
 
 export type AccountProfile = {
+  name: string
   username: string
   canonicalEmail: string
   displayEmail: string
   bio: string
+  dateOfBirth: string
+  language: string
   urls: string[]
   emails: ProfileEmail[]
   usernameAvailableAt: string | null

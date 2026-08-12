@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BellRing, Loader2, RotateCcw, ShieldCheck } from 'lucide-react'
+import { BellRing, Loader2, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiFetch, ApiError } from '@/lib/api-client'
 import {
@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { NOTIFICATION_CATEGORY_ICONS } from '@/components/app-icons'
 
 const requiredCategories = new Set<NotificationCategory>(
   REQUIRED_NOTIFICATION_CATEGORIES
@@ -155,6 +156,7 @@ export function NotificationsForm() {
         {NOTIFICATION_CATEGORY_DEFINITIONS.map((category) => {
           const required = requiredCategories.has(category.key)
           const enabled = required || !muted.includes(category.key)
+          const CategoryIcon = NOTIFICATION_CATEGORY_ICONS[category.key]
           return (
             <div
               key={category.key}
@@ -162,11 +164,7 @@ export function NotificationsForm() {
             >
               <div className='flex min-w-0 items-start gap-3'>
                 <span className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
-                  {required ? (
-                    <ShieldCheck className='size-4' />
-                  ) : (
-                    <BellRing className='size-4' />
-                  )}
+                  <CategoryIcon className='size-4' aria-hidden='true' />
                 </span>
                 <div className='min-w-0'>
                   <p className='text-sm font-medium'>{category.title}</p>

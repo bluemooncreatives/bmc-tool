@@ -4,17 +4,11 @@ import { Link } from '@tanstack/react-router'
 import {
   Archive,
   Bell,
-  CalendarDays,
   CheckCheck,
   CircleAlert,
-  CircleCheck,
-  Info,
-  ListTodo,
   Loader2,
   RefreshCw,
-  ShieldCheck,
   SlidersHorizontal,
-  TriangleAlert,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useNotificationStore } from '@/stores/notification-store'
@@ -31,18 +25,13 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { NOTIFICATION_CATEGORY_ICONS } from '@/components/app-icons'
 
 const POLL_INTERVAL_MS = 30_000
 
 function CategoryIcon({ category }: { category: NotificationCategory }) {
-  if (category === 'security' || category === 'permissions') {
-    return <ShieldCheck className='size-4' />
-  }
-  if (category === 'tasks' || category === 'schedule') {
-    return <ListTodo className='size-4' />
-  }
-  if (category === 'calendars') return <CalendarDays className='size-4' />
-  return <Info className='size-4' />
+  const Icon = NOTIFICATION_CATEGORY_ICONS[category]
+  return <Icon className='size-4' aria-hidden='true' />
 }
 
 function LevelIcon({ notification }: { notification: AppNotification }) {
@@ -54,16 +43,8 @@ function LevelIcon({ notification }: { notification: AppNotification }) {
     notification.level === 'info' && 'bg-primary/10 text-primary'
   )
   return (
-    <span className={className}>
-      {notification.level === 'success' ? (
-        <CircleCheck className='size-4' />
-      ) : notification.level === 'warning' ? (
-        <TriangleAlert className='size-4' />
-      ) : notification.level === 'error' ? (
-        <CircleAlert className='size-4' />
-      ) : (
-        <CategoryIcon category={notification.category} />
-      )}
+    <span className={className} title={notification.category}>
+      <CategoryIcon category={notification.category} />
     </span>
   )
 }

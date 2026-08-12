@@ -83,10 +83,13 @@ export async function PATCH(request: Request) {
     const now = new Date()
     const update: UpdateFilter<UserDoc> = {
       $set: {
+        name: body.data.name,
         username: body.data.username,
         usernameKey: normalizeUsername(body.data.username),
         displayEmail,
         urls: body.data.urls,
+        dateOfBirth: body.data.dateOfBirth,
+        language: body.data.language,
         updatedAt: now,
         ...(usernameChanged ? { usernameChangedAt: now } : {}),
         ...(body.data.bio ? { bio: body.data.bio } : {}),

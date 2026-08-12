@@ -1,7 +1,8 @@
 import { type AuthUser } from '@/stores/auth-store'
+import { type ModuleKey } from '@/lib/permissions'
 
 export type DisplayPreferenceItem = {
-  id: string
+  id: ModuleKey
   label: string
   description: string
   group: string
@@ -10,7 +11,7 @@ export type DisplayPreferenceItem = {
 
 export type DisplayPreferences = {
   availableItems: DisplayPreferenceItem[]
-  selectedItems: string[]
+  selectedItems: ModuleKey[]
   updatedAt: string
 }
 

@@ -1,8 +1,8 @@
 import { Outlet } from '@tanstack/react-router'
-import { Monitor, Bell, Palette, Wrench, UserCog } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { hasModulePermission, type ModuleKey } from '@/lib/permissions'
 import { Separator } from '@/components/ui/separator'
+import { MODULE_ICONS } from '@/components/app-icons'
 import { HeaderActions } from '@/components/header-actions'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -12,33 +12,27 @@ import { SidebarNav } from './components/sidebar-nav'
 
 const sidebarNavItems = [
   {
-    title: 'Profile',
+    title: 'Profile & Account',
     href: '/settings',
-    icon: <UserCog size={18} />,
-    permission: 'settings_profile',
-  },
-  {
-    title: 'Account',
-    href: '/settings/account',
-    icon: <Wrench size={18} />,
-    permission: 'settings_account',
+    icon: <MODULE_ICONS.settings_profile size={18} />,
+    permissions: ['settings_profile', 'settings_account'],
   },
   {
     title: 'Appearance',
     href: '/settings/appearance',
-    icon: <Palette size={18} />,
+    icon: <MODULE_ICONS.settings_appearance size={18} />,
     permission: 'settings_appearance',
   },
   {
     title: 'Notifications',
     href: '/settings/notifications',
-    icon: <Bell size={18} />,
+    icon: <MODULE_ICONS.settings_notifications size={18} />,
     permission: 'settings_notifications',
   },
   {
     title: 'Display',
     href: '/settings/display',
-    icon: <Monitor size={18} />,
+    icon: <MODULE_ICONS.settings_display size={18} />,
     permission: 'settings_display',
   },
 ]
@@ -47,7 +41,9 @@ export function Settings() {
   const user = useAuthStore((state) => state.auth.user)
   const visibleItems = user
     ? sidebarNavItems.filter((item) =>
-        hasModulePermission(user, item.permission as ModuleKey)
+        (item.permissions ?? [item.permission]).some((permission) =>
+          hasModulePermission(user, permission as ModuleKey)
+        )
       )
     : []
   return (

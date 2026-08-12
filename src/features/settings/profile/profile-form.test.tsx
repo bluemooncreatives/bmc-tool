@@ -17,10 +17,13 @@ function jsonResponse(body: unknown) {
 }
 
 const profile: AccountProfile = {
+  name: 'BMC Member',
   username: 'bmc-member',
   canonicalEmail: 'member@example.com',
   displayEmail: 'member@example.com',
   bio: '',
+  dateOfBirth: '1995-06-15',
+  language: 'en',
   urls: ['https://example.com/'],
   emails: [
     {
@@ -39,6 +42,7 @@ const publicUser = {
   email: 'member@example.com',
   username: 'bmc-member',
   displayEmail: 'member@example.com',
+  name: 'BMC Member',
   role: ['user'],
 }
 
@@ -80,11 +84,29 @@ describe('ProfileForm', () => {
     await expect
       .element(screen.getByLabelText(/^Username$/i))
       .toHaveValue('bmc-member')
+    await expect
+      .element(screen.getByLabelText(/^Name$/i))
+      .toHaveValue('BMC Member')
+    await expect
+      .element(screen.getByRole('button', { name: 'Date of birth' }))
+      .toHaveTextContent('Jun 15, 1995')
+    await expect
+      .element(screen.getByLabelText(/^Language$/i))
+      .toHaveTextContent('English')
     await expect.element(screen.getByLabelText(/Bio/i)).toHaveValue('')
     await expect
-      .element(screen.getByRole('button', { name: 'Update profile' }))
+      .element(screen.getByRole('button', { name: 'Update profile & account' }))
       .toBeDisabled()
     expect(fetchMock).toHaveBeenCalled()
+
+    const username = await screen.getByLabelText(/^Username$/i).element()
+    const dateOfBirth = await screen
+      .getByRole('button', { name: 'Date of birth' })
+      .element()
+    expect(username.closest('section')?.className).toContain('md:grid-cols-2')
+    expect(dateOfBirth.closest('section')?.className).toContain(
+      'md:grid-cols-2'
+    )
   })
 
   it('submits optional fields and synchronizes the authenticated user', async () => {
@@ -94,7 +116,7 @@ describe('ProfileForm', () => {
 
     await userEvent.fill(bio, 'Product designer and illustrator.')
     await userEvent.click(
-      screen.getByRole('button', { name: 'Update profile' })
+      screen.getByRole('button', { name: 'Update profile & account' })
     )
 
     await vi.waitFor(() => {
@@ -105,7 +127,10 @@ describe('ProfileForm', () => {
       expect(patchCall).toBeDefined()
       expect(JSON.parse(String(patchCall?.[1]?.body))).toEqual({
         username: 'bmc-member',
+        name: 'BMC Member',
         displayEmail: 'member@example.com',
+        dateOfBirth: '1995-06-15',
+        language: 'en',
         bio: 'Product designer and illustrator.',
         urls: ['https://example.com/'],
         expectedUpdatedAt: '2026-08-12T10:00:00.000Z',
@@ -128,5 +153,30 @@ describe('ProfileForm', () => {
     await expect
       .element(screen.getByRole('textbox', { name: 'URL 2', exact: true }))
       .not.toBeInTheDocument()
+  })
+
+  it('blocks duplicate canonical URLs before sending an update', async () => {
+    const screen = await render(<ProfileForm />)
+    await expect
+      .element(screen.getByRole('textbox', { name: 'URL 1', exact: true }))
+      .toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Add URL' }))
+    await userEvent.fill(
+      screen.getByRole('textbox', { name: 'URL 2', exact: true }),
+      'https://example.com'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Update profile & account' })
+    )
+
+    await expect
+      .element(screen.getByText('Duplicate URLs are not allowed.'))
+      .toBeInTheDocument()
+    expect(
+      fetchMock.mock.calls.filter(
+        ([path, options]) =>
+          path === '/api/account/profile' && options?.method === 'PATCH'
+      )
+    ).toHaveLength(0)
   })
 })

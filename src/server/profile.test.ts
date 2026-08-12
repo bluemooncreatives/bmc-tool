@@ -40,9 +40,12 @@ describe('profile validation', () => {
 
   it('allows an empty optional bio and canonicalizes HTTP URLs', () => {
     const result = profileUpdateSchema.parse({
+      name: 'Account Owner',
       username: 'owner',
       displayEmail: 'owner@example.com',
       bio: '   ',
+      dateOfBirth: '1990-02-28',
+      language: 'en',
       urls: ['https://example.com/about'],
       expectedUpdatedAt: '2026-08-12T10:00:00.000Z',
     })
@@ -52,9 +55,12 @@ describe('profile validation', () => {
 
   it('rejects unsupported URL schemes and duplicates', () => {
     const base = {
+      name: 'Account Owner',
       username: 'owner',
       displayEmail: 'owner@example.com',
       bio: '',
+      dateOfBirth: '1990-02-28',
+      language: 'en',
       expectedUpdatedAt: '2026-08-12T10:00:00.000Z',
     }
     expect(
@@ -68,6 +74,31 @@ describe('profile validation', () => {
       }).success
     ).toBe(false)
   })
+
+  it('rejects invalid account data and future dates of birth', () => {
+    const base = {
+      name: 'Account Owner',
+      username: 'owner',
+      displayEmail: 'owner@example.com',
+      bio: '',
+      urls: [],
+      expectedUpdatedAt: '2026-08-12T10:00:00.000Z',
+    }
+    expect(
+      profileUpdateSchema.safeParse({
+        ...base,
+        dateOfBirth: '2999-01-01',
+        language: 'en',
+      }).success
+    ).toBe(false)
+    expect(
+      profileUpdateSchema.safeParse({
+        ...base,
+        dateOfBirth: '1990-02-28',
+        language: 'unsupported',
+      }).success
+    ).toBe(false)
+  })
 })
 
 describe('profile serialization', () => {
@@ -75,6 +106,7 @@ describe('profile serialization', () => {
     const profile = serializeProfile(sampleUser())
     expect(profile.canonicalEmail).toBe('owner@example.com')
     expect(profile.displayEmail).toBe('owner@example.com')
+    expect(profile.name).toBe('')
     expect(profile.emails[0]).toMatchObject({
       address: 'owner@example.com',
       isPrimary: true,

@@ -17,9 +17,10 @@ const groups: NavGroup[] = [
         title: 'Settings',
         items: [
           {
-            title: 'Profile',
+            title: 'Profile & Account',
             url: '/settings',
             permission: 'settings_profile',
+            permissionAnyOf: ['settings_profile', 'settings_account'],
           },
           {
             title: 'Display',
@@ -51,5 +52,16 @@ describe('filterNavGroups display preferences', () => {
     expect(result[1]?.items[0]?.items?.map((item) => item.title)).toContain(
       'Display'
     )
+  })
+
+  it('shows the unified destination to legacy account-only users', () => {
+    const result = filterNavGroups(groups, {
+      role: ['user'],
+      modulePermissions: ['settings_account'],
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0]?.items[0]?.items?.map((item) => item.title)).toEqual([
+      'Profile & Account',
+    ])
   })
 })

@@ -1,6 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
-import { hasModulePermission } from '@/lib/permissions'
+import {
+  hasAccountSettingsAccess,
+  hasModulePermission,
+} from '@/lib/permissions'
 import useDialogState from '@/hooks/use-dialog-state'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -18,24 +21,33 @@ import { SignOutDialog } from '@/components/sign-out-dialog'
 export function ProfileDropdown() {
   const [open, setOpen] = useDialogState()
   const user = useAuthStore((state) => state.auth.user)
+  const displayName =
+    user?.name ||
+    user?.username ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+    'BMC Team'
+  const displayEmail =
+    user?.displayEmail ?? user?.email ?? 'Blue Moon Creatives'
   const settingsLinks = user
     ? [
-        {
-          to: '/settings' as const,
-          label: 'Profile',
-          permission: 'settings_profile' as const,
-        },
-        {
-          to: '/settings/account' as const,
-          label: 'Account',
-          permission: 'settings_account' as const,
-        },
+        ...(hasAccountSettingsAccess(user)
+          ? [
+              {
+                to: '/settings' as const,
+                label: 'Profile & Account',
+                permission: null,
+              },
+            ]
+          : []),
         {
           to: '/settings/notifications' as const,
           label: 'Notifications',
           permission: 'settings_notifications' as const,
         },
-      ].filter((item) => hasModulePermission(user, item.permission))
+      ].filter(
+        (item) =>
+          item.permission === null || hasModulePermission(user, item.permission)
+      )
     : []
 
   return (
@@ -55,9 +67,11 @@ export function ProfileDropdown() {
         <DropdownMenuContent className='w-56' align='end' forceMount>
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col gap-1.5'>
-              <p className='text-sm leading-none font-medium'>BMC Team</p>
+              <p className='truncate text-sm leading-none font-medium'>
+                {displayName}
+              </p>
               <p className='text-xs leading-none text-muted-foreground'>
-                Blue Moon Creatives
+                {displayEmail}
               </p>
             </div>
           </DropdownMenuLabel>

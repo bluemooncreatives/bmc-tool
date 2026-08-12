@@ -4,8 +4,8 @@ import { ProfileForm } from './profile-form'
 export function SettingsProfile() {
   return (
     <ContentSection
-      title='Profile'
-      desc='This is how others will see you on the site.'
+      title='Profile & Account'
+      desc='Manage your identity, account details, contact addresses, and public profile.'
     >
       <ProfileForm />
     </ContentSection>
