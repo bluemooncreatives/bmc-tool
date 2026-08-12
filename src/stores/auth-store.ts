@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string
   username: string
   displayEmail: string
+  hiddenSidebarItems?: string[]
   role: string[]
   status?: 'active' | 'inactive' | 'invited' | 'suspended'
   firstName?: string

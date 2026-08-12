@@ -20,6 +20,8 @@ export type UserDoc = {
   emails: UserEmail[]
   /** Public/contact email. Never replaces the canonical `email` field. */
   displayEmail: string
+  /** Navigation modules the user chose to hide; absent means show defaults. */
+  hiddenSidebarItems?: ModuleKey[]
   passwordHash: string
   role: Role[]
   status: UserStatus
@@ -52,6 +54,7 @@ export type PublicUser = {
   email: string
   username: string
   displayEmail: string
+  hiddenSidebarItems: ModuleKey[]
   role: Role[]
   status: UserStatus
   firstName?: string
@@ -67,6 +70,7 @@ export function toPublicUser(user: UserDoc): PublicUser {
     email: user.email,
     username: user.username,
     displayEmail: user.displayEmail ?? user.email,
+    hiddenSidebarItems: sanitizeModulePermissions(user.hiddenSidebarItems),
     role: sanitizeRoles(user.role),
     status: user.status ?? 'active',
     firstName: user.firstName,

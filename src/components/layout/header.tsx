@@ -26,7 +26,9 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
   return (
     <header
       className={cn(
-        'z-50 h-[4.5rem] bg-transparent p-2',
+        // This sits above a flexible, internally scrolling main area. It must
+        // never donate height when a route has a larger min-content size.
+        'z-50 h-[4.5rem] min-h-[4.5rem] w-full min-w-0 shrink-0 bg-transparent p-2',
         fixed && 'header-fixed peer/header sticky top-0 w-[inherit]',
         className
       )}

@@ -315,7 +315,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'div'>) {
       className={cn(
         // Full-bleed in every variant: no margin, rounding, border or shadow,
         // so the content sits flush against the sidebar and window edges.
-        'relative flex w-full flex-1 flex-col bg-background',
+        'relative flex min-h-0 w-full min-w-0 flex-1 flex-col bg-background',
         className
       )}
       {...props}

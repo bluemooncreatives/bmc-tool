@@ -16,7 +16,13 @@ import { NavUser } from './nav-user'
 export function AppSidebar() {
   const { collapsible, variant } = useLayout()
   const user = useAuthStore((state) => state.auth.user)
-  const navGroups = user ? filterNavGroups(sidebarData.navGroups, user) : []
+  const navGroups = user
+    ? filterNavGroups(
+        sidebarData.navGroups,
+        user,
+        user.hiddenSidebarItems ?? []
+      )
+    : []
   const name =
     user?.username ||
     [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
