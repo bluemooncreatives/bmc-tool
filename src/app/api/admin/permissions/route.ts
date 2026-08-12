@@ -1,4 +1,8 @@
+import { resolveAccess } from '@/server/access-control'
 import { parseJsonBody } from '@/server/auth-schemas'
+import { getDesignationsCollection } from '@/server/directory'
+import { findOrganizationById } from '@/server/organizations'
+import { primaryRole } from '@/server/roles'
 import {
   assertSameOrigin,
   AuthorizationError,
@@ -24,10 +28,13 @@ function toPermissionUser(user: UserDoc) {
     email: user.email,
     firstName: user.firstName ?? '',
     lastName: user.lastName ?? '',
-    role: user.role.includes('superadmin') ? 'superadmin' : 'user',
+    role: primaryRole(user.role),
     status: user.status ?? 'active',
     modulePermissions: sanitizeModulePermissions(user.modulePermissions),
     isSystemOwner: Boolean(user.isSystemOwner),
+    organizationId: user.organizationId?.toHexString() ?? '',
+    organizationName: user.organizationName ?? '',
+    organizationCode: user.organizationCode ?? '',
     lastLoginAt: user.lastLoginAt?.toISOString(),
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
@@ -103,10 +110,33 @@ export async function PATCH(request: Request) {
     }
 
     const requested = new Set(body.data.permissions)
-    const permissions = MODULE_KEYS.filter((permission) =>
+    const grantedModules = MODULE_KEYS.filter((permission) =>
       requested.has(permission)
     )
+
+    // The grant is recorded as-asked, but what the account actually receives is
+    // still clipped by the organization's entitlements and its designation
+    // template, so this screen cannot quietly exceed a tenant's plan.
+    const organization = await findOrganizationById(target.organizationId)
+    const designation = target.designationId
+      ? await (
+          await getDesignationsCollection()
+        ).findOne({
+          _id: target.designationId,
+          organizationId: target.organizationId,
+        })
+      : null
+    const resolved = resolveAccess({
+      role: target.role,
+      grantedModules,
+      deniedModules: target.deniedModules,
+      grantedModuleActions: target.grantedModuleActions,
+      designation,
+      organization,
+    })
+
     const before = sanitizeModulePermissions(target.modulePermissions)
+    const permissions = resolved.modulePermissions
     const unchanged =
       permissions.length === before.length &&
       permissions.every((permission, index) => permission === before[index])
@@ -123,7 +153,12 @@ export async function PATCH(request: Request) {
         role: { $ne: 'superadmin' },
       },
       {
-        $set: { modulePermissions: permissions, updatedAt: now },
+        $set: {
+          grantedModules,
+          modulePermissions: permissions,
+          moduleActions: resolved.moduleActions,
+          updatedAt: now,
+        },
         $inc: { tokenVersion: 1 },
       },
       { returnDocument: 'after' }

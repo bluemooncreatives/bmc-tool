@@ -1,117 +1,206 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, type RenderResult } from 'vitest-browser-react'
-import { type Locator, userEvent } from 'vitest/browser'
+import { userEvent } from 'vitest/browser'
 import { ApiError } from '@/lib/api-client'
 import { SignUp } from './index'
 
-const navigate = vi.fn()
-const signUpMock = vi.fn(
-  async ({ email }: { email: string; password: string }) => ({
-    id: '65f0000000000000000000aa',
-    accountNo: 'ACC-1',
-    email,
-    role: ['user'],
-  })
-)
+const mocks = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  signUp: vi.fn(),
+  apiFetch: vi.fn(),
+}))
+
+vi.mock('@/lib/api-client', async (original) => ({
+  ...(await original()),
+  apiFetch: mocks.apiFetch,
+}))
 
 vi.mock('@/stores/auth-store', () => ({
-  useAuthStore: () => ({ auth: { signUp: signUpMock } }),
+  useAuthStore: () => ({ auth: { signUp: mocks.signUp } }),
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => navigate,
+  useNavigate: () => mocks.navigate,
 }))
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
-describe('SignUp page', () => {
-  let screen: RenderResult
-  let usernameInput: Locator
-  let emailInput: Locator
-  let passwordInput: Locator
-  let confirmPasswordInput: Locator
-  let submitButton: Locator
+const organizations = [
+  {
+    id: 'internal',
+    code: 'BMC',
+    name: 'Blue Moon Creatives',
+    type: 'internal',
+    allowSelfSignUp: true,
+  },
+  {
+    id: 'acme',
+    code: 'ACME',
+    name: 'Acme Studios',
+    type: 'client',
+    allowSelfSignUp: true,
+  },
+  {
+    id: 'northstar',
+    code: 'NORTHSTAR',
+    name: 'Northstar Partners',
+    type: 'partner',
+    allowSelfSignUp: true,
+  },
+]
 
-  beforeEach(async () => {
+async function renderPage() {
+  const screen = await render(<SignUp />)
+  await expect
+    .element(screen.getByRole('combobox', { name: 'Organization' }))
+    .toBeEnabled()
+  return screen
+}
+
+async function selectAcme(screen: RenderResult) {
+  await userEvent.click(screen.getByRole('combobox', { name: 'Organization' }))
+  await userEvent.click(screen.getByRole('option', { name: /Acme Studios/i }))
+}
+
+async function fillValidAccount(screen: RenderResult) {
+  await userEvent.fill(screen.getByLabelText(/^Username$/i), 'alex')
+  await userEvent.fill(screen.getByLabelText(/^Email Address$/i), 'a@b.com')
+  await userEvent.fill(screen.getByLabelText(/^Password$/i), 'Secure123')
+  await userEvent.fill(
+    screen.getByLabelText(/^Confirm Password$/i),
+    'Secure123'
+  )
+}
+
+describe('SignUp page organization picker', () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-
-    screen = await render(<SignUp />)
-    usernameInput = screen.getByLabelText(/^Username$/i)
-    emailInput = screen.getByLabelText(/^Email Address$/i)
-    passwordInput = screen.getByLabelText(/^Password$/i)
-    confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i)
-    submitButton = screen.getByRole('button', { name: /^Create Account$/i })
+    mocks.apiFetch.mockResolvedValue({ organizations })
+    mocks.signUp.mockImplementation(async ({ email }: { email: string }) => ({
+      id: '65f0000000000000000000000aa',
+      accountNo: 'ACME-1',
+      email,
+      username: 'alex',
+      displayEmail: email,
+      role: ['user'],
+    }))
   })
 
-  it('renders the fields and submit button', async () => {
-    await expect.element(emailInput).toBeInTheDocument()
-    await expect.element(usernameInput).toBeInTheDocument()
-    await expect.element(passwordInput).toBeInTheDocument()
-    await expect.element(confirmPasswordInput).toBeInTheDocument()
-    await expect.element(submitButton).toBeInTheDocument()
-  })
-
-  it('shows a mismatch error and does not submit when passwords differ', async () => {
-    await userEvent.fill(emailInput, 'a@b.com')
-    await userEvent.fill(usernameInput, 'alex')
-    await userEvent.fill(passwordInput, 'Secure123')
-    await userEvent.fill(confirmPasswordInput, 'Secure124')
-    await userEvent.click(submitButton)
+  it('uses a dropdown and never renders the internal organization', async () => {
+    const screen = await renderPage()
+    const organization = screen.getByRole('combobox', {
+      name: 'Organization',
+    })
 
     await expect
-      .element(screen.getByText("Passwords don't match."))
-      .toBeInTheDocument()
-    expect(signUpMock).not.toHaveBeenCalled()
-  })
-
-  it('rejects a password shorter than 8 characters', async () => {
-    await userEvent.fill(emailInput, 'a@b.com')
-    await userEvent.fill(usernameInput, 'alex')
-    await userEvent.fill(passwordInput, 'Short1')
-    await userEvent.fill(confirmPasswordInput, 'Short1')
-    await userEvent.click(submitButton)
-
+      .element(organization)
+      .toHaveTextContent('Select an organization')
+    await userEvent.click(organization)
     await expect
-      .element(screen.getByText('Password must be at least 8 characters long.'))
+      .element(screen.getByRole('option', { name: /Acme Studios/i }))
       .toBeInTheDocument()
-    expect(signUpMock).not.toHaveBeenCalled()
+    await expect
+      .element(screen.getByRole('option', { name: /Northstar Partners/i }))
+      .toBeInTheDocument()
+    await expect
+      .element(screen.getByRole('option', { name: /Blue Moon Creatives/i }))
+      .not.toBeInTheDocument()
+    await expect
+      .element(screen.getByPlaceholder('Organization code, e.g. ACME'))
+      .not.toBeInTheDocument()
   })
 
-  it('creates a deny-by-default account and opens the access notice', async () => {
-    await userEvent.fill(emailInput, 'a@b.com')
-    await userEvent.fill(usernameInput, 'alex')
-    await userEvent.fill(passwordInput, 'Secure123')
-    await userEvent.fill(confirmPasswordInput, 'Secure123')
-    await userEvent.click(submitButton)
+  it('submits the selected organization code with the account', async () => {
+    const screen = await renderPage()
+    const submit = screen.getByRole('button', { name: 'Create Account' })
+    await expect.element(submit).toBeDisabled()
 
-    await vi.waitFor(() => expect(signUpMock).toHaveBeenCalledOnce())
-    // confirmPassword is a client-side check only and is not sent.
-    expect(signUpMock).toHaveBeenCalledWith({
+    await selectAcme(screen)
+    await fillValidAccount(screen)
+    await expect.element(submit).toBeEnabled()
+    await userEvent.click(submit)
+
+    await vi.waitFor(() => expect(mocks.signUp).toHaveBeenCalledOnce())
+    expect(mocks.signUp).toHaveBeenCalledWith({
+      organizationCode: 'ACME',
       email: 'a@b.com',
       username: 'alex',
       password: 'Secure123',
     })
-
-    await vi.waitFor(() =>
-      expect(navigate).toHaveBeenCalledWith({ to: '/403', replace: true })
-    )
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/', replace: true })
   })
 
-  it('surfaces a server error and stays on the page', async () => {
-    signUpMock.mockRejectedValueOnce(
-      new ApiError('An account with that email already exists.', 409)
+  it('keeps sign-up disabled when no external organization is eligible', async () => {
+    mocks.apiFetch.mockResolvedValueOnce({ organizations: [organizations[0]] })
+    const screen = await render(<SignUp />)
+
+    await expect
+      .element(screen.getByText('No organizations accepting sign-ups'))
+      .toBeInTheDocument()
+    await expect
+      .element(screen.getByRole('button', { name: 'Create Account' }))
+      .toBeDisabled()
+  })
+
+  it('shows a retry state when the organization directory fails', async () => {
+    mocks.apiFetch
+      .mockRejectedValueOnce(new ApiError('Could not load organizations.', 503))
+      .mockResolvedValueOnce({ organizations })
+    const screen = await render(<SignUp />)
+
+    await expect
+      .element(screen.getByText('Could not load organizations.'))
+      .toBeInTheDocument()
+    await expect
+      .element(screen.getByRole('button', { name: 'Create Account' }))
+      .toBeDisabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await expect
+      .element(screen.getByRole('combobox', { name: 'Organization' }))
+      .toBeEnabled()
+    expect(mocks.apiFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('validates password confirmation before submitting', async () => {
+    const screen = await renderPage()
+    await selectAcme(screen)
+    await userEvent.fill(screen.getByLabelText(/^Username$/i), 'alex')
+    await userEvent.fill(screen.getByLabelText(/^Email Address$/i), 'a@b.com')
+    await userEvent.fill(screen.getByLabelText(/^Password$/i), 'Secure123')
+    await userEvent.fill(
+      screen.getByLabelText(/^Confirm Password$/i),
+      'Secure124'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create Account' })
     )
 
-    await userEvent.fill(emailInput, 'taken@b.com')
-    await userEvent.fill(usernameInput, 'alex')
-    await userEvent.fill(passwordInput, 'Secure123')
-    await userEvent.fill(confirmPasswordInput, 'Secure123')
-    await userEvent.click(submitButton)
-
-    await vi.waitFor(() => expect(signUpMock).toHaveBeenCalledOnce())
     await expect
-      .element(screen.getByText('An account with that email already exists.'))
+      .element(screen.getByText("Passwords don't match."))
       .toBeInTheDocument()
-    expect(navigate).not.toHaveBeenCalled()
+    expect(mocks.signUp).not.toHaveBeenCalled()
+  })
+
+  it('surfaces a server rejection without losing the selected organization', async () => {
+    mocks.signUp.mockRejectedValueOnce(
+      new ApiError('That organization is no longer accepting sign-ups.', 403)
+    )
+    const screen = await renderPage()
+    await selectAcme(screen)
+    await fillValidAccount(screen)
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create Account' })
+    )
+
+    await expect
+      .element(
+        screen.getByText('That organization is no longer accepting sign-ups.')
+      )
+      .toBeInTheDocument()
+    await expect
+      .element(screen.getByRole('combobox', { name: 'Organization' }))
+      .toHaveTextContent('Acme Studios')
+    expect(mocks.navigate).not.toHaveBeenCalled()
   })
 })

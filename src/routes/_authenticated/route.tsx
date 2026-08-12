@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/auth-store'
 import { canAccessPath } from '@/lib/permissions'
 import { AuthenticatedLayout } from '@/components/layout/authenticated-layout'
 
+const SET_PASSWORD_PATH = '/set-password'
+
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ location }) => {
     const { auth } = useAuthStore.getState()
@@ -19,7 +21,17 @@ export const Route = createFileRoute('/_authenticated')({
       })
     }
 
-    if (!canAccessPath(user, location.pathname)) {
+    // An account still holding an administrator-issued password gets exactly
+    // one destination until it chooses its own. The path itself is excluded so
+    // the redirect cannot loop.
+    if (user.mustChangePassword && location.pathname !== SET_PASSWORD_PATH) {
+      throw redirect({ to: SET_PASSWORD_PATH })
+    }
+
+    if (
+      location.pathname !== SET_PASSWORD_PATH &&
+      !canAccessPath(user, location.pathname)
+    ) {
       throw redirect({ to: '/403' })
     }
   },

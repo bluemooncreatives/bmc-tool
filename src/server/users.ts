@@ -1,12 +1,24 @@
 import { type Collection, ObjectId } from 'mongodb'
 import { createHash, randomBytes } from 'node:crypto'
 import { type SupportedLanguage } from '@/lib/account-profile'
-import { sanitizeModulePermissions, type ModuleKey } from '@/lib/permissions'
+import { type EmploymentType } from '@/lib/organizations'
+import {
+  sanitizeModuleActions,
+  sanitizeModulePermissions,
+  type ModuleActionMap,
+  type ModuleKey,
+} from '@/lib/permissions'
 import { getSuperadminEmail, getSuperadminPassword } from './env'
 import { normalizeEmail, normalizeUsername } from './identity'
 import { getDb } from './mongodb'
+import { getInternalOrganization } from './organizations'
 import { hashPassword } from './password'
-import { sanitizeRoles, type Role, type UserStatus } from './roles'
+import {
+  sanitizeRoles,
+  type AccountScope,
+  type Role,
+  type UserStatus,
+} from './roles'
 
 export type UserDoc = {
   _id: ObjectId
@@ -34,8 +46,58 @@ export type UserDoc = {
   lastName?: string
   emailVerifiedAt?: Date
   mfaEnabled: boolean
+
+  // --- Tenancy ------------------------------------------------------------
+  /** Every account belongs to exactly one organization. */
+  organizationId: ObjectId
+  /** Denormalized so listings and emails do not need a join. */
+  organizationCode: string
+  organizationName: string
+  /** `platform` accounts act across tenants; `organization` accounts do not. */
+  scope: AccountScope
+
+  // --- Position in the organization ---------------------------------------
+  departmentId?: ObjectId
+  departmentName?: string
+  designationId?: ObjectId
+  designationTitle?: string
+  /** Reporting line. Drives the org chart; must stay inside the same tenant. */
+  managerId?: ObjectId
+  employeeId?: string
+  employmentType?: EmploymentType
+  jobTitle?: string
+  phone?: string
+  location?: string
+  timezone?: string
+  joinedAt?: Date
+
+  // --- Access -------------------------------------------------------------
+  /** Effective, fully resolved module access. This is what is enforced. */
   modulePermissions: ModuleKey[]
+  /** Direct grants made by an administrator, before resolution. */
+  grantedModules: ModuleKey[]
+  /** Explicit removals that beat both grants and designation defaults. */
+  deniedModules?: ModuleKey[]
+  /** Effective per-module action refinement. */
+  moduleActions?: ModuleActionMap
+  /** Action overrides set directly on the account. */
+  grantedModuleActions?: ModuleActionMap
+
   isSystemOwner?: boolean
+
+  // --- Lifecycle ----------------------------------------------------------
+  /** Set for provisioned accounts until the member picks their own password. */
+  mustChangePassword?: boolean
+  invitedBy?: ObjectId
+  invitedAt?: Date
+  activatedAt?: Date
+  suspendedAt?: Date
+  suspendedReason?: string
+  deactivatedAt?: Date
+  lastPasswordChangeAt?: Date
+  /** Free-form administrative note, visible only in Account Control. */
+  adminNotes?: string
+
   failedSignInAttempts: number
   lockedUntil?: Date
   lastLoginAt?: Date
@@ -66,6 +128,16 @@ export type PublicUser = {
   lastName?: string
   mfaEnabled: boolean
   modulePermissions: ModuleKey[]
+  moduleActions: ModuleActionMap
+  organizationId: string
+  organizationCode: string
+  organizationName: string
+  scope: AccountScope
+  designationTitle?: string
+  departmentName?: string
+  jobTitle?: string
+  isSystemOwner: boolean
+  mustChangePassword: boolean
 }
 
 export function toPublicUser(user: UserDoc): PublicUser {
@@ -86,6 +158,107 @@ export function toPublicUser(user: UserDoc): PublicUser {
     lastName: user.lastName,
     mfaEnabled: Boolean(user.mfaEnabled),
     modulePermissions: sanitizeModulePermissions(user.modulePermissions),
+    moduleActions: sanitizeModuleActions(user.moduleActions),
+    organizationId: user.organizationId?.toHexString() ?? '',
+    organizationCode: user.organizationCode ?? '',
+    organizationName: user.organizationName ?? '',
+    scope: user.scope ?? 'organization',
+    designationTitle: user.designationTitle,
+    departmentName: user.departmentName,
+    jobTitle: user.jobTitle,
+    isSystemOwner: Boolean(user.isSystemOwner),
+    mustChangePassword: Boolean(user.mustChangePassword),
+  }
+}
+
+/**
+ * The administrative view of an account. Richer than PublicUser because
+ * Account Management needs the unresolved grants and the lifecycle timestamps,
+ * and never leaves the Account Management endpoints.
+ */
+export type ManagedAccount = {
+  id: string
+  accountNo: string
+  email: string
+  username: string
+  name: string
+  role: Role
+  status: UserStatus
+  scope: AccountScope
+  organizationId: string
+  organizationCode: string
+  organizationName: string
+  departmentId: string | null
+  departmentName: string
+  designationId: string | null
+  designationTitle: string
+  managerId: string | null
+  employeeId: string
+  employmentType: EmploymentType | ''
+  jobTitle: string
+  phone: string
+  location: string
+  timezone: string
+  joinedAt: string | null
+  modulePermissions: ModuleKey[]
+  grantedModules: ModuleKey[]
+  deniedModules: ModuleKey[]
+  moduleActions: ModuleActionMap
+  grantedModuleActions: ModuleActionMap
+  mfaEnabled: boolean
+  isSystemOwner: boolean
+  mustChangePassword: boolean
+  adminNotes: string
+  suspendedReason: string
+  lastLoginAt: string | null
+  invitedAt: string | null
+  activatedAt: string | null
+  suspendedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export function toManagedAccount(user: UserDoc): ManagedAccount {
+  return {
+    id: user._id.toHexString(),
+    accountNo: user.accountNo,
+    email: user.email,
+    username: user.username,
+    name: getUserDisplayName(user),
+    role: sanitizeRoles(user.role)[0] as Role,
+    status: user.status ?? 'active',
+    scope: user.scope ?? 'organization',
+    organizationId: user.organizationId?.toHexString() ?? '',
+    organizationCode: user.organizationCode ?? '',
+    organizationName: user.organizationName ?? '',
+    departmentId: user.departmentId?.toHexString() ?? null,
+    departmentName: user.departmentName ?? '',
+    designationId: user.designationId?.toHexString() ?? null,
+    designationTitle: user.designationTitle ?? '',
+    managerId: user.managerId?.toHexString() ?? null,
+    employeeId: user.employeeId ?? '',
+    employmentType: user.employmentType ?? '',
+    jobTitle: user.jobTitle ?? '',
+    phone: user.phone ?? '',
+    location: user.location ?? '',
+    timezone: user.timezone ?? '',
+    joinedAt: user.joinedAt?.toISOString() ?? null,
+    modulePermissions: sanitizeModulePermissions(user.modulePermissions),
+    grantedModules: sanitizeModulePermissions(user.grantedModules),
+    deniedModules: sanitizeModulePermissions(user.deniedModules),
+    moduleActions: sanitizeModuleActions(user.moduleActions),
+    grantedModuleActions: sanitizeModuleActions(user.grantedModuleActions),
+    mfaEnabled: Boolean(user.mfaEnabled),
+    isSystemOwner: Boolean(user.isSystemOwner),
+    mustChangePassword: Boolean(user.mustChangePassword),
+    adminNotes: user.adminNotes ?? '',
+    suspendedReason: user.suspendedReason ?? '',
+    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+    invitedAt: user.invitedAt?.toISOString() ?? null,
+    activatedAt: user.activatedAt?.toISOString() ?? null,
+    suspendedAt: user.suspendedAt?.toISOString() ?? null,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
   }
 }
 
@@ -110,6 +283,11 @@ function legacyUsername(user: Pick<UserDoc, '_id' | 'email'>): string {
   return `${prefix}-${suffix}`
 }
 
+/** Human account number, unique enough to be quoted in support requests. */
+export function generateAccountNo(organizationCode: string): string {
+  return `${organizationCode}-${randomBytes(4).toString('hex').toUpperCase()}`
+}
+
 let collectionReady: Promise<void> | undefined
 
 async function prepareUsersCollection(
@@ -119,6 +297,9 @@ async function prepareUsersCollection(
 
   const now = new Date()
   const email = normalizeEmail(getSuperadminEmail())
+
+  // The internal tenant must exist before any account can be attached to one.
+  const internal = await getInternalOrganization()
 
   // Backfill template-era accounts before enforcing the new unique indexes.
   // The ObjectId suffix makes generated usernames deterministic and collision
@@ -160,19 +341,47 @@ async function prepareUsersCollection(
   await Promise.all([
     users.createIndex({ usernameKey: 1 }, { unique: true }),
     users.createIndex({ 'emails.address': 1 }, { unique: true }),
+    users.createIndex({ organizationId: 1, email: 1 }),
+    users.createIndex({ organizationId: 1, status: 1 }),
+    users.createIndex({ managerId: 1 }),
   ])
 
-  // Normalize documents from the dashboard template. Access remains
-  // deny-by-default until the owner grants individual modules. The configured
-  // owner address is the only document allowed to retain superadmin authority.
+  // Only the configured owner address may hold platform authority. This is
+  // scoped to documents that actually claim it, so organization administrators
+  // created through Account Management are never demoted on boot.
   await users.updateMany(
-    { email: { $ne: email } },
-    { $set: { role: ['user'], isSystemOwner: false } }
+    {
+      email: { $ne: email },
+      $or: [{ role: 'superadmin' }, { isSystemOwner: true }],
+    },
+    { $set: { role: ['user'], isSystemOwner: false, scope: 'organization' } }
+  )
+
+  // Accounts that predate multi-tenancy join the internal organization.
+  await users.updateMany(
+    { organizationId: { $exists: false } },
+    {
+      $set: {
+        organizationId: internal._id,
+        organizationCode: internal.code,
+        organizationName: internal.name,
+        scope: 'organization',
+      },
+    }
+  )
+  await users.updateMany(
+    { organizationId: internal._id, organizationName: { $ne: internal.name } },
+    { $set: { organizationName: internal.name } }
   )
   await users.updateMany(
     { modulePermissions: { $exists: false } },
     { $set: { modulePermissions: [] } }
   )
+  // Direct grants seed from whatever effective access the account already had,
+  // so resolution is a no-op for every pre-existing account.
+  await users.updateMany({ grantedModules: { $exists: false } }, [
+    { $set: { grantedModules: { $ifNull: ['$modulePermissions', []] } } },
+  ])
   await users.updateMany(
     { status: { $exists: false } },
     { $set: { status: 'active' } }
@@ -223,7 +432,7 @@ async function prepareUsersCollection(
         lastName: 'Creatives',
         tokenVersion: 0,
         failedSignInAttempts: 0,
-        modulePermissions: [],
+        grantedModules: [],
         createdAt: now,
       },
       $set: {
@@ -232,6 +441,12 @@ async function prepareUsersCollection(
         status: 'active',
         mfaEnabled: true,
         isSystemOwner: true,
+        organizationId: internal._id,
+        organizationCode: internal.code,
+        organizationName: internal.name,
+        scope: 'platform',
+        jobTitle: 'Platform Owner',
+        mustChangePassword: false,
         updatedAt: now,
       },
     },
@@ -253,4 +468,18 @@ export async function getUsersCollection(): Promise<Collection<UserDoc>> {
   await collectionReady
 
   return users
+}
+
+export async function findUserById(
+  id: ObjectId | string
+): Promise<UserDoc | null> {
+  const objectId =
+    typeof id === 'string'
+      ? ObjectId.isValid(id)
+        ? new ObjectId(id)
+        : null
+      : id
+  if (!objectId) return null
+  const users = await getUsersCollection()
+  return users.findOne({ _id: objectId })
 }

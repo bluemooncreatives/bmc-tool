@@ -22,6 +22,16 @@ export const signUpSchema = z.object({
   username: usernameSchema,
   email: emailField,
   password: newPasswordSchema,
+  /**
+   * Every account belongs to a tenant, so sign-up now names one. The code is
+   * matched case-insensitively against the organization's own code.
+   */
+  organizationCode: z
+    .string('Select the organization you are joining.')
+    .trim()
+    .min(2, 'Select the organization you are joining.')
+    .max(16, 'That organization code is not valid.')
+    .transform((value) => value.toUpperCase()),
 })
 
 export const emailSchema = z.object({

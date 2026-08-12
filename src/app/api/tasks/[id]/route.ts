@@ -5,8 +5,8 @@ import {
 } from '@/server/authorization'
 import { updateTaskSchema } from '@/server/task-schemas'
 import {
-  activeTaskFilter,
   getTasksCollection,
+  organizationTaskFilter,
   toPublicTask,
   type TaskDoc,
 } from '@/server/tasks'
@@ -64,9 +64,15 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     if (parsed.data.taggedTo !== undefined)
       setFields.taggedTo = parsed.data.taggedTo
 
-    const taskFilter = hasModulePermission(user, 'tasks')
-      ? { taskNumber: id }
-      : { $and: [{ taskNumber: id }, activeTaskFilter()] }
+    // The organization is part of the lookup, so a task number from another
+    // tenant simply does not resolve.
+    const taskFilter = {
+      taskNumber: id,
+      ...organizationTaskFilter(
+        user.organizationId,
+        hasModulePermission(user, 'tasks') ? null : 'active'
+      ),
+    }
     const updated = await tasks.findOneAndUpdate(
       taskFilter,
       { $set: setFields },
@@ -104,9 +110,15 @@ export async function DELETE(request: Request, { params }: RouteContext) {
     const user = await requireAnyModulePermission(['tasks', 'tasks_active'])
 
     const tasks = await getTasksCollection()
-    const taskFilter = hasModulePermission(user, 'tasks')
-      ? { taskNumber: id }
-      : { $and: [{ taskNumber: id }, activeTaskFilter()] }
+    // The organization is part of the lookup, so a task number from another
+    // tenant simply does not resolve.
+    const taskFilter = {
+      taskNumber: id,
+      ...organizationTaskFilter(
+        user.organizationId,
+        hasModulePermission(user, 'tasks') ? null : 'active'
+      ),
+    }
     const result = await tasks.deleteOne(taskFilter)
     if (result.deletedCount === 0) {
       return NextResponse.json(

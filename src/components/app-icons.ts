@@ -1,5 +1,6 @@
 import {
   BellRing,
+  Building2,
   CalendarDays,
   ChartNoAxesCombined,
   CircleHelp,
@@ -12,10 +13,12 @@ import {
   ListTodo,
   Map,
   Monitor,
+  Network,
   Palette,
   ServerCog,
   ShieldCheck,
   UserCog,
+  UserPlus,
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
@@ -38,6 +41,9 @@ export const MODULE_ICONS = {
   settings_notifications: BellRing,
   settings_display: Monitor,
   help_center: CircleHelp,
+  account_organizations: Building2,
+  account_users: UserPlus,
+  account_control: Network,
 } satisfies Record<ModuleKey, LucideIcon>
 
 export const NOTIFICATION_CATEGORY_ICONS = {

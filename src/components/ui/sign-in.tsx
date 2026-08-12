@@ -117,15 +117,17 @@ export const FormError = ({ message }: { message?: string | null }) =>
 
 export const SubmitButton = ({
   isLoading,
+  disabled,
   children,
 }: {
   isLoading?: boolean
+  disabled?: boolean
   children: React.ReactNode
 }) => (
   <Button
     type='submit'
     size='lg'
-    disabled={isLoading}
+    disabled={isLoading || disabled}
     className='animate-element animate-delay-600 w-full'
   >
     {isLoading && <Loader2 className='animate-spin' />}
@@ -251,10 +253,7 @@ export const AuthPageShell = ({
     <section className='flex flex-1 items-center justify-center overflow-y-auto p-6 sm:p-8'>
       <div className='flex w-full max-w-sm flex-col gap-6'>{children}</div>
     </section>
-    <AuthHeroPanel
-      heroImageSrc={heroImageSrc}
-      testimonials={testimonials}
-    />
+    <AuthHeroPanel heroImageSrc={heroImageSrc} testimonials={testimonials} />
   </div>
 )
 

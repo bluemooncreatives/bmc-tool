@@ -120,6 +120,30 @@ export const sidebarData: SidebarData = {
           ],
         },
         {
+          title: 'Account Management',
+          icon: MODULE_ICONS.account_control,
+          items: [
+            {
+              title: 'Organizations',
+              url: '/account-management/organizations',
+              icon: MODULE_ICONS.account_organizations,
+              permission: 'account_organizations',
+            },
+            {
+              title: 'Create User',
+              url: '/account-management/create-user',
+              icon: MODULE_ICONS.account_users,
+              permission: 'account_users',
+            },
+            {
+              title: 'Account Control',
+              url: '/account-management/account-control',
+              icon: MODULE_ICONS.account_control,
+              permission: 'account_control',
+            },
+          ],
+        },
+        {
           title: 'Help Center',
           url: '/help-center',
           icon: MODULE_ICONS.help_center,

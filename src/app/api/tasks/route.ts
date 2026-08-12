@@ -6,8 +6,8 @@ import {
 } from '@/server/authorization'
 import { createTaskSchema } from '@/server/task-schemas'
 import {
-  activeTaskFilter,
   getTasksCollection,
+  organizationTaskFilter,
   toPublicTask,
   type TaskDoc,
 } from '@/server/tasks'
@@ -40,15 +40,14 @@ export async function GET(request: Request) {
         { status: 400 }
       )
     }
-    if (scope === 'active') {
-      await requireAnyModulePermission(['tasks', 'tasks_active'])
-    } else {
-      await requireModulePermission('tasks')
-    }
+    const user =
+      scope === 'active'
+        ? await requireAnyModulePermission(['tasks', 'tasks_active'])
+        : await requireModulePermission('tasks')
 
     const tasks = await getTasksCollection()
     const results = await tasks
-      .find(scope === 'active' ? activeTaskFilter() : {})
+      .find(organizationTaskFilter(user.organizationId, scope))
       .sort({ createdAt: -1 })
       .toArray()
 
@@ -88,6 +87,7 @@ export async function POST(request: Request) {
     const now = new Date()
     const doc: TaskDoc = {
       _id: new ObjectId(),
+      organizationId: user.organizationId,
       taskNumber: parsed.data.id,
       title: parsed.data.title,
       description: parsed.data.description,

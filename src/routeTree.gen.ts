@@ -47,6 +47,10 @@ import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
+import { Route as AuthenticatedAccountManagementOrganizationsRouteImport } from './routes/_authenticated/account-management/organizations'
+import { Route as AuthenticatedAccountManagementCreateUserRouteImport } from './routes/_authenticated/account-management/create-user'
+import { Route as AuthenticatedAccountManagementAccountControlRouteImport } from './routes/_authenticated/account-management/account-control'
+import { Route as AuthenticatedSetPasswordRouteImport } from './routes/_authenticated/set-password'
 
 const ClerkRouteRoute = ClerkRouteRouteImport.update({
   id: '/clerk',
@@ -249,6 +253,26 @@ const AuthenticatedErrorsErrorRoute =
     path: '/errors/$error',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAccountManagementOrganizationsRoute = AuthenticatedAccountManagementOrganizationsRouteImport.update({
+  id: '/account-management/organizations',
+  path: '/account-management/organizations',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAccountManagementCreateUserRoute = AuthenticatedAccountManagementCreateUserRouteImport.update({
+  id: '/account-management/create-user',
+  path: '/account-management/create-user',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAccountManagementAccountControlRoute = AuthenticatedAccountManagementAccountControlRouteImport.update({
+  id: '/account-management/account-control',
+  path: '/account-management/account-control',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSetPasswordRoute = AuthenticatedSetPasswordRouteImport.update({
+  id: '/set-password',
+  path: '/set-password',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -266,6 +290,10 @@ export interface FileRoutesByFullPath {
   '/500': typeof errors500Route
   '/503': typeof errors503Route
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/account-management/organizations': typeof AuthenticatedAccountManagementOrganizationsRoute
+  '/account-management/create-user': typeof AuthenticatedAccountManagementCreateUserRoute
+  '/account-management/account-control': typeof AuthenticatedAccountManagementAccountControlRoute
+  '/set-password': typeof AuthenticatedSetPasswordRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -302,6 +330,10 @@ export interface FileRoutesByTo {
   '/503': typeof errors503Route
   '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/account-management/organizations': typeof AuthenticatedAccountManagementOrganizationsRoute
+  '/account-management/create-user': typeof AuthenticatedAccountManagementCreateUserRoute
+  '/account-management/account-control': typeof AuthenticatedAccountManagementAccountControlRoute
+  '/set-password': typeof AuthenticatedSetPasswordRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -343,6 +375,10 @@ export interface FileRoutesById {
   '/(errors)/503': typeof errors503Route
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/_authenticated/account-management/organizations': typeof AuthenticatedAccountManagementOrganizationsRoute
+  '/_authenticated/account-management/create-user': typeof AuthenticatedAccountManagementCreateUserRoute
+  '/_authenticated/account-management/account-control': typeof AuthenticatedAccountManagementAccountControlRoute
+  '/_authenticated/set-password': typeof AuthenticatedSetPasswordRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -382,6 +418,10 @@ export interface FileRouteTypes {
     | '/500'
     | '/503'
     | '/errors/$error'
+    | '/account-management/organizations'
+    | '/account-management/create-user'
+    | '/account-management/account-control'
+    | '/set-password'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -418,6 +458,10 @@ export interface FileRouteTypes {
     | '/503'
     | '/'
     | '/errors/$error'
+    | '/account-management/organizations'
+    | '/account-management/create-user'
+    | '/account-management/account-control'
+    | '/set-password'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -458,6 +502,10 @@ export interface FileRouteTypes {
     | '/(errors)/503'
     | '/_authenticated/'
     | '/_authenticated/errors/$error'
+    | '/_authenticated/account-management/organizations'
+    | '/_authenticated/account-management/create-user'
+    | '/_authenticated/account-management/account-control'
+    | '/_authenticated/set-password'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
@@ -764,6 +812,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/account-management/organizations': {
+      id: '/_authenticated/account-management/organizations'
+      path: '/account-management/organizations'
+      fullPath: '/account-management/organizations'
+      preLoaderRoute: typeof AuthenticatedAccountManagementOrganizationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account-management/create-user': {
+      id: '/_authenticated/account-management/create-user'
+      path: '/account-management/create-user'
+      fullPath: '/account-management/create-user'
+      preLoaderRoute: typeof AuthenticatedAccountManagementCreateUserRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account-management/account-control': {
+      id: '/_authenticated/account-management/account-control'
+      path: '/account-management/account-control'
+      fullPath: '/account-management/account-control'
+      preLoaderRoute: typeof AuthenticatedAccountManagementAccountControlRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/set-password': {
+      id: '/_authenticated/set-password'
+      path: '/set-password'
+      fullPath: '/set-password'
+      preLoaderRoute: typeof AuthenticatedSetPasswordRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -794,6 +870,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
+  AuthenticatedAccountManagementOrganizationsRoute: typeof AuthenticatedAccountManagementOrganizationsRoute
+  AuthenticatedAccountManagementCreateUserRoute: typeof AuthenticatedAccountManagementCreateUserRoute
+  AuthenticatedAccountManagementAccountControlRoute: typeof AuthenticatedAccountManagementAccountControlRoute
+  AuthenticatedSetPasswordRoute: typeof AuthenticatedSetPasswordRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
@@ -812,6 +892,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
+  AuthenticatedAccountManagementOrganizationsRoute: AuthenticatedAccountManagementOrganizationsRoute,
+  AuthenticatedAccountManagementCreateUserRoute: AuthenticatedAccountManagementCreateUserRoute,
+  AuthenticatedAccountManagementAccountControlRoute: AuthenticatedAccountManagementAccountControlRoute,
+  AuthenticatedSetPasswordRoute: AuthenticatedSetPasswordRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,

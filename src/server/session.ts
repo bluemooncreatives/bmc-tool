@@ -8,7 +8,7 @@ import {
   verifyToken,
   type TokenPayload,
 } from './jwt'
-import { isActiveStatus } from './roles'
+import { canSignIn } from './roles'
 import {
   getUsersCollection,
   toPublicUser,
@@ -119,9 +119,9 @@ async function loadUserForToken(
   const user = await users.findOne({ _id: id })
   if (!user) return null
 
-  // A suspended/inactive account loses access immediately, including through
-  // a refresh token issued before its status changed.
-  if (!isActiveStatus(user.status ?? 'active')) return null
+  // A suspended/inactive/pending account loses access immediately, including
+  // through a refresh token issued before its status changed.
+  if (!canSignIn(user.status)) return null
 
   // Rejects tokens issued before the user's last credential change.
   if (user.tokenVersion !== payload.ver) return null

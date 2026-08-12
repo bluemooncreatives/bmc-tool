@@ -10,11 +10,23 @@ export interface AuthUser {
   name?: string
   hiddenSidebarItems?: string[]
   role: string[]
-  status?: 'active' | 'inactive' | 'invited' | 'suspended'
+  status?: 'active' | 'inactive' | 'invited' | 'pending' | 'suspended'
   firstName?: string
   lastName?: string
   mfaEnabled?: boolean
   modulePermissions?: string[]
+  moduleActions?: Record<string, string[]>
+  /** The tenant this account belongs to. Every screen is scoped by it. */
+  organizationId?: string
+  organizationCode?: string
+  organizationName?: string
+  scope?: 'platform' | 'organization'
+  designationTitle?: string
+  departmentName?: string
+  jobTitle?: string
+  isSystemOwner?: boolean
+  /** True while the account is still on an administrator-issued password. */
+  mustChangePassword?: boolean
 }
 
 /**
@@ -24,7 +36,11 @@ export interface AuthUser {
 export type AuthStatus = 'pending' | 'authenticated' | 'unauthenticated'
 
 type Credentials = { email: string; password: string }
-type SignUpCredentials = Credentials & { username: string }
+type SignUpCredentials = Credentials & {
+  username: string
+  /** The tenant the new account is joining. */
+  organizationCode: string
+}
 /** rememberMe=false keeps the session only until the browser closes. */
 type SignInCredentials = Credentials & { rememberMe?: boolean }
 type SessionResponse = { user: AuthUser }
@@ -36,6 +52,12 @@ export type OtpRequiredResponse = {
   resendAfter: number
 }
 export type SignInResult = AuthUser | OtpRequiredResponse
+/** Returned when the organization vets new members before they can sign in. */
+export type PendingApprovalResponse = {
+  pendingApproval: true
+  message: string
+}
+export type SignUpResult = AuthUser | PendingApprovalResponse
 
 interface AuthState {
   auth: {
@@ -45,7 +67,7 @@ interface AuthState {
     /** Resolves the session from the httpOnly cookies. Safe to call repeatedly. */
     hydrate: () => Promise<AuthUser | null>
     signIn: (credentials: SignInCredentials) => Promise<SignInResult>
-    signUp: (credentials: SignUpCredentials) => Promise<AuthUser>
+    signUp: (credentials: SignUpCredentials) => Promise<SignUpResult>
     signOut: () => Promise<void>
     /** Clears local state only — use signOut to also drop the server session. */
     reset: () => void
@@ -106,12 +128,18 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       },
 
       signUp: async (credentials) => {
-        const { user } = await apiFetch<SessionResponse>('/api/auth/sign-up', {
+        const response = await apiFetch<
+          SessionResponse | PendingApprovalResponse
+        >('/api/auth/sign-up', {
           method: 'POST',
           body: credentials,
         })
-        get().auth.setUser(user)
-        return user
+        // An organization that vets its members answers without a session, so
+        // there is nothing to hydrate — the caller shows the pending message.
+        if ('pendingApproval' in response) return response
+
+        get().auth.setUser(response.user)
+        return response.user
       },
 
       signOut: async () => {

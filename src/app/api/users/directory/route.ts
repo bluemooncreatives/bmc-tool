@@ -14,10 +14,16 @@ export const runtime = 'nodejs'
  */
 export async function GET() {
   try {
-    await requireAuthenticatedUser()
+    const actor = await requireAuthenticatedUser()
 
     const users = await getUsersCollection()
-    const results = await users.find({}).sort({ email: 1 }).limit(500).toArray()
+    // Scoped to the caller's own organization: an assignee picker must never
+    // surface names from another tenant.
+    const results = await users
+      .find({ organizationId: actor.organizationId })
+      .sort({ email: 1 })
+      .limit(500)
+      .toArray()
 
     return NextResponse.json(
       {
