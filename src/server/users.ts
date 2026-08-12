@@ -60,6 +60,12 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
+/** "First Last", falling back to the email when no name is on file. */
+export function getUserDisplayName(user: UserDoc): string {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
+  return name || user.email
+}
+
 let collectionReady: Promise<void> | undefined
 
 async function prepareUsersCollection(

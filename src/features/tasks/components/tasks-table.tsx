@@ -24,18 +24,16 @@ import {
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { resolveOptions } from '../data/data'
-import { type Task } from '../data/schema'
 import { useTaskOptionsStore } from '../stores/task-options-store'
 import { DataTableBulkActions } from './data-table-bulk-actions'
 import { getTasksColumns } from './tasks-columns'
+import { useTasks } from './tasks-provider'
 
 const route = getRouteApi('/_authenticated/tasks/')
 
-type DataTableProps = {
-  data: Task[]
-}
+export function TasksTable() {
+  const { tasks: data, isLoading, error } = useTasks()
 
-export function TasksTable({ data }: DataTableProps) {
   // Local UI-only states
   const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = useState<SortingState>([])
@@ -176,7 +174,22 @@ export function TasksTable({ data }: DataTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className='h-24 text-center'>
+                  Loading tasks...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center text-destructive'
+                >
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

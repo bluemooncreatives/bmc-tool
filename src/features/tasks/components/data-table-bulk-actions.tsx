@@ -20,6 +20,7 @@ import { resolveOptions } from '../data/data'
 import { type Task } from '../data/schema'
 import { useTaskOptionsStore } from '../stores/task-options-store'
 import { TasksMultiDeleteDialog } from './tasks-multi-delete-dialog'
+import { useTasks } from './tasks-provider'
 
 type DataTableBulkActionsProps<TData> = {
   table: Table<TData>
@@ -32,31 +33,40 @@ export function DataTableBulkActions<TData>({
   const selectedRows = table.getFilteredSelectedRowModel().rows
   const statuses = resolveOptions(useTaskOptionsStore((s) => s.statuses))
   const priorities = resolveOptions(useTaskOptionsStore((s) => s.priorities))
+  const { updateTask } = useTasks()
 
   const handleBulkStatusChange = (status: string) => {
     const selectedTasks = selectedRows.map((row) => row.original as Task)
-    toast.promise(sleep(2000), {
-      loading: 'Updating status...',
-      success: () => {
-        table.resetRowSelection()
-        return `Status updated to "${status}" for ${selectedTasks.length} task${selectedTasks.length > 1 ? 's' : ''}.`
-      },
-      error: 'Error',
-    })
-    table.resetRowSelection()
+    toast.promise(
+      Promise.all(
+        selectedTasks.map((task) => updateTask(task.id, { status }))
+      ),
+      {
+        loading: 'Updating status...',
+        success: () => {
+          table.resetRowSelection()
+          return `Status updated to "${status}" for ${selectedTasks.length} task${selectedTasks.length > 1 ? 's' : ''}.`
+        },
+        error: 'Could not update status for all selected tasks.',
+      }
+    )
   }
 
   const handleBulkPriorityChange = (priority: string) => {
     const selectedTasks = selectedRows.map((row) => row.original as Task)
-    toast.promise(sleep(2000), {
-      loading: 'Updating priority...',
-      success: () => {
-        table.resetRowSelection()
-        return `Priority updated to "${priority}" for ${selectedTasks.length} task${selectedTasks.length > 1 ? 's' : ''}.`
-      },
-      error: 'Error',
-    })
-    table.resetRowSelection()
+    toast.promise(
+      Promise.all(
+        selectedTasks.map((task) => updateTask(task.id, { priority }))
+      ),
+      {
+        loading: 'Updating priority...',
+        success: () => {
+          table.resetRowSelection()
+          return `Priority updated to "${priority}" for ${selectedTasks.length} task${selectedTasks.length > 1 ? 's' : ''}.`
+        },
+        error: 'Could not update priority for all selected tasks.',
+      }
+    )
   }
 
   const handleBulkExport = () => {

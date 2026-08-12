@@ -1,4 +1,6 @@
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { ApiError } from '@/lib/api-client'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { ManageTaskOptionsDialog } from './manage-task-options-dialog'
 import { TasksImportDialog } from './tasks-import-dialog'
@@ -6,7 +8,9 @@ import { TasksMutateDrawer } from './tasks-mutate-drawer'
 import { useTasks } from './tasks-provider'
 
 export function TasksDialogs() {
-  const { open, setOpen, currentRow, setCurrentRow } = useTasks()
+  const { open, setOpen, currentRow, setCurrentRow, deleteTask } = useTasks()
+  const [isDeleting, setIsDeleting] = useState(false)
+
   return (
     <>
       <TasksMutateDrawer
@@ -45,21 +49,31 @@ export function TasksDialogs() {
             key='task-delete'
             destructive
             open={open === 'delete'}
+            isLoading={isDeleting}
             onOpenChange={() => {
               setOpen('delete')
               setTimeout(() => {
                 setCurrentRow(null)
               }, 500)
             }}
-            handleConfirm={() => {
-              setOpen(null)
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-              showSubmittedData(
-                currentRow,
-                'The following task has been deleted:'
-              )
+            handleConfirm={async () => {
+              setIsDeleting(true)
+              try {
+                await deleteTask(currentRow.id)
+                toast.success(`Deleted task ${currentRow.id}.`)
+                setOpen(null)
+                setTimeout(() => {
+                  setCurrentRow(null)
+                }, 500)
+              } catch (error) {
+                toast.error(
+                  error instanceof ApiError
+                    ? error.message
+                    : 'Could not delete the task.'
+                )
+              } finally {
+                setIsDeleting(false)
+              }
             }}
             className='max-w-md'
             title={`Delete this task: ${currentRow.id} ?`}

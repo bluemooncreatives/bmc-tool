@@ -1,4 +1,5 @@
 import { type ColumnDef } from '@tanstack/react-table'
+import { UserCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -164,6 +165,44 @@ export function getTasksColumns({
       },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id))
+      },
+    },
+    {
+      accessorKey: 'taggedBy',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Tagged By' />
+      ),
+      meta: { className: 'ps-1', tdClassName: 'ps-3' },
+      cell: ({ row }) => {
+        const taggedBy = row.getValue<string>('taggedBy')
+        if (!taggedBy) return null
+
+        return (
+          <div className='flex w-32 items-center gap-1.5 truncate text-muted-foreground'>
+            <UserCircle2 className='size-3.5 shrink-0' />
+            <span className='truncate'>{taggedBy}</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'taggedTo',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Tagged To' />
+      ),
+      meta: { className: 'ps-1', tdClassName: 'ps-3' },
+      cell: ({ row }) => {
+        const taggedTo = row.getValue<string>('taggedTo')
+        if (!taggedTo) {
+          return <span className='text-muted-foreground'>Unassigned</span>
+        }
+
+        return (
+          <div className='flex w-32 items-center gap-1.5 truncate'>
+            <UserCircle2 className='size-3.5 shrink-0 text-muted-foreground' />
+            <span className='truncate'>{taggedTo}</span>
+          </div>
+        )
       },
     },
     {
