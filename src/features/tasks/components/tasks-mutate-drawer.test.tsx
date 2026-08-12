@@ -22,6 +22,9 @@ const { apiFetchMock, MockApiError } = vi.hoisted(() => {
 
       if (path === '/api/users/directory') return { users: [] }
       if (path === '/api/tasks' && method === 'GET') return { tasks: [] }
+      if (path === '/api/tasks?scope=active' && method === 'GET') {
+        return { tasks: [] }
+      }
       if (path === '/api/tasks' && method === 'POST') {
         return {
           task: {
@@ -69,7 +72,11 @@ vi.mock('@/stores/auth-store', () => ({
   useAuthStore: (selector: (state: unknown) => unknown) =>
     selector({
       auth: {
-        user: { firstName: 'Test', lastName: 'User', email: 'test@example.com' },
+        user: {
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+        },
       },
     }),
 }))
@@ -87,8 +94,8 @@ const MOCK_TASK = {
   updatedAt: '2024-01-01T00:00:00.000Z',
 } as const satisfies Task
 
-function withProvider(children: ReactNode) {
-  return <TasksProvider>{children}</TasksProvider>
+function withProvider(children: ReactNode, scope: 'all' | 'active' = 'all') {
+  return <TasksProvider scope={scope}>{children}</TasksProvider>
 }
 
 describe('TasksMutateDrawer', () => {
@@ -109,6 +116,23 @@ describe('TasksMutateDrawer', () => {
 
     await expect.element(title).toBeInTheDocument()
     await expect.element(desc).toBeInTheDocument()
+  })
+
+  it('offers only active statuses when creating from Active Tasks', async () => {
+    const { getByRole } = await render(
+      withProvider(<TasksMutateDrawer open onOpenChange={vi.fn()} />, 'active')
+    )
+
+    await userEvent.click(getByRole('combobox', { name: /Status/i }))
+    await expect
+      .element(getByRole('option', { name: /Todo/i }))
+      .toBeInTheDocument()
+    await expect
+      .element(getByRole('option', { name: /Done/i }))
+      .not.toBeInTheDocument()
+    await expect
+      .element(getByRole('option', { name: /Canceled/i }))
+      .not.toBeInTheDocument()
   })
 
   it('renders edit title, description, and prefilled title', async () => {

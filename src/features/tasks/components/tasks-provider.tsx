@@ -18,6 +18,7 @@ export type TaskInput = {
 }
 
 type TasksContextType = {
+  scope: TaskScope
   open: TasksDialogType | null
   setOpen: (str: TasksDialogType | null) => void
   currentRow: Task | null
@@ -130,6 +131,7 @@ export function TasksProvider({
   return (
     <TasksContext
       value={{
+        scope,
         open,
         setOpen,
         currentRow,

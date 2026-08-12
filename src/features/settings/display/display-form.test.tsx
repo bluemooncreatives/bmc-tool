@@ -18,8 +18,15 @@ const preferences = {
     },
     {
       id: 'tasks',
-      label: 'Tasks',
-      description: 'Task lists, ownership, and delivery status.',
+      label: 'All Tasks',
+      description: 'View and manage every task, including completed work.',
+      group: 'Operations',
+      required: false,
+    },
+    {
+      id: 'tasks_active',
+      label: 'Active Tasks',
+      description: 'View and manage tasks that are still in progress.',
       group: 'Operations',
       required: false,
     },
@@ -31,7 +38,7 @@ const preferences = {
       required: true,
     },
   ],
-  selectedItems: ['home', 'tasks', 'settings_display'],
+  selectedItems: ['home', 'tasks', 'tasks_active', 'settings_display'],
   updatedAt: '2026-08-12T10:00:00.000Z',
 }
 const user = {
@@ -41,7 +48,7 @@ const user = {
   username: 'member',
   displayEmail: 'member@example.com',
   role: ['user'],
-  modulePermissions: ['home', 'tasks', 'settings_display'],
+  modulePermissions: ['home', 'tasks', 'tasks_active', 'settings_display'],
   hiddenSidebarItems: ['tasks'],
 }
 
@@ -66,7 +73,7 @@ describe('DisplayForm', () => {
           return response({
             preferences: {
               ...preferences,
-              selectedItems: ['home', 'settings_display'],
+              selectedItems: ['home', 'tasks_active', 'settings_display'],
               updatedAt: '2026-08-12T10:01:00.000Z',
             },
             user,
@@ -83,7 +90,8 @@ describe('DisplayForm', () => {
     const screen = await render(<DisplayForm />)
 
     await expect.element(screen.getByLabelText('Home')).toBeChecked()
-    await expect.element(screen.getByLabelText('Tasks')).toBeChecked()
+    await expect.element(screen.getByLabelText('All Tasks')).toBeChecked()
+    await expect.element(screen.getByLabelText('Active Tasks')).toBeChecked()
     await expect
       .element(screen.getByLabelText('Display settings'))
       .toBeDisabled()
@@ -97,7 +105,7 @@ describe('DisplayForm', () => {
 
   it('persists visibility choices and updates the active user immediately', async () => {
     const screen = await render(<DisplayForm />)
-    const tasks = screen.getByLabelText('Tasks')
+    const tasks = screen.getByLabelText('All Tasks')
     await expect.element(tasks).toBeChecked()
 
     await userEvent.click(tasks)
@@ -111,7 +119,7 @@ describe('DisplayForm', () => {
           path === '/api/account/display' && options?.method === 'PATCH'
       )
       expect(JSON.parse(String(saveCall?.[1]?.body))).toEqual({
-        selectedItems: ['home', 'settings_display'],
+        selectedItems: ['home', 'tasks_active', 'settings_display'],
         expectedUpdatedAt: '2026-08-12T10:00:00.000Z',
       })
     })
@@ -120,7 +128,7 @@ describe('DisplayForm', () => {
 
   it('discards unsaved visibility changes', async () => {
     const screen = await render(<DisplayForm />)
-    const tasks = screen.getByLabelText('Tasks')
+    const tasks = screen.getByLabelText('All Tasks')
     await expect.element(tasks).toBeChecked()
 
     await userEvent.click(tasks)

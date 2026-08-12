@@ -2,7 +2,7 @@ import z from 'zod'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { hasActiveTasksAccess, hasModulePermission } from '@/lib/permissions'
-import { Tasks } from '@/features/tasks'
+import { TasksRoute } from '@/features/tasks/tasks-route'
 
 const taskSearchSchema = z.object({
   page: z.number().optional().catch(1),
@@ -29,14 +29,3 @@ export const Route = createFileRoute('/_authenticated/tasks/')({
   },
   component: TasksRoute,
 })
-
-function TasksRoute() {
-  const search = Route.useSearch()
-  return (
-    <Tasks
-      search={search}
-      navigate={Route.useNavigate()}
-      scope={search.view === 'active' ? 'active' : 'all'}
-    />
-  )
-}

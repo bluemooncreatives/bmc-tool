@@ -3,9 +3,10 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { ApiError, apiFetch } from '@/lib/api-client'
-import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
+import { ApiError, apiFetch } from '@/lib/api-client'
+import { isTaskActive } from '@/lib/tasks'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -76,14 +77,16 @@ export function TasksMutateDrawer({
   currentRow,
 }: TaskMutateDrawerProps) {
   const isUpdate = !!currentRow
-  const { createTask, updateTask } = useTasks()
+  const { createTask, updateTask, scope } = useTasks()
   const currentUser = useAuthStore((s) => s.auth.user)
 
   const storeLabels = useTaskOptionsStore((s) => s.labels)
   const storeStatuses = useTaskOptionsStore((s) => s.statuses)
   const storePriorities = useTaskOptionsStore((s) => s.priorities)
   const labels = resolveOptions(storeLabels)
-  const statuses = resolveOptions(storeStatuses)
+  const statuses = resolveOptions(storeStatuses).filter(
+    (status) => isUpdate || scope !== 'active' || isTaskActive(status.value)
+  )
   const priorities = resolveOptions(storePriorities)
 
   const [directory, setDirectory] = useState<DirectoryUser[]>([])

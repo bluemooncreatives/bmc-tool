@@ -26,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import { urlMatches } from './nav-active'
 import {
   type NavCollapsible,
   type NavItem,
@@ -175,11 +176,11 @@ function SidebarMenuCollapsedDropdown({
 
 function checkIsActive(href: string, item: NavItem, mainNav = false) {
   const itemUrl = item.url?.toString()
-  const hrefHasSearch = href.includes('?')
   return (
-    href === itemUrl || // endpoint with matching search
-    (!hrefHasSearch && href.split('?')[0] === itemUrl) || // plain endpoint
-    !!item?.items?.filter((i) => i.url === href).length || // if child nav is active
+    (itemUrl ? urlMatches(href, itemUrl) : false) ||
+    !!item.items?.some((child) =>
+      child.url ? urlMatches(href, child.url.toString()) : false
+    ) ||
     (mainNav &&
       href.split('/')[1] !== '' &&
       href.split('/')[1] === itemUrl?.split('/')[1])

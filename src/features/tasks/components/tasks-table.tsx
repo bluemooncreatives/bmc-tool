@@ -11,6 +11,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import { isTaskActive } from '@/lib/tasks'
 import { cn } from '@/lib/utils'
 import { useTableUrlState, type NavigateFn } from '@/hooks/use-table-url-state'
 import {
@@ -39,7 +40,7 @@ export function TasksTable({
   navigate,
   emptyMessage = 'No tasks found.',
 }: TasksTableProps) {
-  const { tasks: data, isLoading, error } = useTasks()
+  const { tasks: data, isLoading, error, refetch, scope } = useTasks()
 
   // Local UI-only states
   const [rowSelection, setRowSelection] = useState({})
@@ -51,6 +52,13 @@ export function TasksTable({
   const storePriorities = useTaskOptionsStore((s) => s.priorities)
   const labels = useMemo(() => resolveOptions(storeLabels), [storeLabels])
   const statuses = useMemo(() => resolveOptions(storeStatuses), [storeStatuses])
+  const visibleStatusFilters = useMemo(
+    () =>
+      scope === 'active'
+        ? statuses.filter((status) => isTaskActive(status.value))
+        : statuses,
+    [scope, statuses]
+  )
   const priorities = useMemo(
     () => resolveOptions(storePriorities),
     [storePriorities]
@@ -144,7 +152,7 @@ export function TasksTable({
           {
             columnId: 'status',
             title: 'Status',
-            options: statuses,
+            options: visibleStatusFilters,
           },
           {
             columnId: 'priority',
@@ -196,7 +204,16 @@ export function TasksTable({
                   colSpan={columns.length}
                   className='h-24 text-center text-destructive'
                 >
-                  {error}
+                  <div className='flex flex-col items-center gap-3'>
+                    <span>{error}</span>
+                    <button
+                      type='button'
+                      className='text-sm font-medium text-primary underline-offset-4 hover:underline'
+                      onClick={() => void refetch()}
+                    >
+                      Retry
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (

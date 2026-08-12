@@ -116,17 +116,32 @@ describe('SearchProvider and CommandMenu', () => {
     }
   )
 
-  it('navigates to a top-level route and closes the palette when a nav item is selected', async () => {
+  it('navigates to the All Tasks subsection and closes the palette', async () => {
     const screen = await renderWithSearchProvider()
 
     await openCommandPalette(screen)
 
-    await userEvent.click(screen.getByText('Tasks'))
+    await userEvent.click(
+      screen.getByRole('option', { name: 'Tasks All Tasks' })
+    )
 
     expect(mocks.navigate).toHaveBeenCalledWith({ to: '/tasks' })
     await expect
       .element(screen.getByPlaceholder(COMMAND_MENU_PLACEHOLDER))
       .not.toBeInTheDocument()
+  })
+
+  it('navigates to the Active Tasks subsection', async () => {
+    const screen = await renderWithSearchProvider()
+    await openCommandPalette(screen)
+
+    await userEvent.click(
+      screen.getByRole('option', { name: 'Tasks Active Tasks' })
+    )
+
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: '/tasks?view=active',
+    })
   })
 
   it('navigates for nested sidebar items (group with sub-items)', async () => {
