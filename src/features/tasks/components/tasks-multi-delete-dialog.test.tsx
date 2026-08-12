@@ -4,20 +4,55 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
 import { TasksMultiDeleteDialog } from './tasks-multi-delete-dialog'
+import { TasksProvider } from './tasks-provider'
 
 vi.mock('@/lib/utils', async (orig) => ({
   ...(await orig()),
   sleep: vi.fn(() => Promise.resolve()),
 }))
 
+const { apiFetchMock, MockApiError } = vi.hoisted(() => {
+  class MockApiError extends Error {
+    readonly status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.name = 'ApiError'
+      this.status = status
+    }
+  }
+
+  const apiFetchMock = vi.fn(
+    async (path: string, options?: { method?: string }) => {
+      const method = options?.method ?? 'GET'
+      if (path === '/api/tasks' && method === 'GET') return { tasks: [] }
+      if (path.startsWith('/api/tasks/') && method === 'DELETE')
+        return { ok: true }
+      return {}
+    }
+  )
+
+  return { apiFetchMock, MockApiError }
+})
+
+vi.mock('@/lib/api-client', () => ({
+  ApiError: MockApiError,
+  apiFetch: (path: string, options?: { method?: string; body?: unknown }) =>
+    apiFetchMock(path, options),
+}))
+
 describe('TasksMultiDeleteDialog', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    apiFetchMock.mockClear()
+  })
 
   it('renders the dialog with the correct title, description, input and buttons', async () => {
     const { table } = createTableMock()
 
     const { getByRole, getByText } = await render(
-      <TasksMultiDeleteDialog open onOpenChange={vi.fn()} table={table} />
+      <TasksProvider>
+        <TasksMultiDeleteDialog open onOpenChange={vi.fn()} table={table} />
+      </TasksProvider>
     )
 
     const title = getByRole('heading', {
@@ -44,7 +79,9 @@ describe('TasksMultiDeleteDialog', () => {
   it('keeps the delete button disabled until the confirm delete input is filled correctly', async () => {
     const { table } = createTableMock()
     const { getByRole } = await render(
-      <TasksMultiDeleteDialog open onOpenChange={vi.fn()} table={table} />
+      <TasksProvider>
+        <TasksMultiDeleteDialog open onOpenChange={vi.fn()} table={table} />
+      </TasksProvider>
     )
 
     const confirmDeleteInput = getByRole('textbox', {
@@ -65,7 +102,9 @@ describe('TasksMultiDeleteDialog', () => {
     const onOpenChange = vi.fn()
     const { table } = createTableMock()
     const { getByRole } = await render(
-      <TasksMultiDeleteDialog open onOpenChange={onOpenChange} table={table} />
+      <TasksProvider>
+        <TasksMultiDeleteDialog open onOpenChange={onOpenChange} table={table} />
+      </TasksProvider>
     )
 
     const cancelButton = getByRole('button', { name: /Cancel/i })
@@ -96,7 +135,11 @@ describe('TasksMultiDeleteDialog', () => {
       )
     }
 
-    const { getByRole } = await render(<Harness />)
+    const { getByRole } = await render(
+      <TasksProvider>
+        <Harness />
+      </TasksProvider>
+    )
 
     const confirmDeleteInput = getByRole('textbox', {
       name: /Confirm by typing "DELETE"/i,
@@ -112,11 +155,13 @@ describe('TasksMultiDeleteDialog', () => {
     await expect.element(confirmDeleteInput).toHaveValue('')
   })
 
-  it('shows the submitted data when deleted successfully', async () => {
+  it('deletes the selected tasks when confirmed', async () => {
     const { table, resetRowSelection } = createTableMock()
     const onOpenChange = vi.fn()
     const { getByRole } = await render(
-      <TasksMultiDeleteDialog open onOpenChange={onOpenChange} table={table} />
+      <TasksProvider>
+        <TasksMultiDeleteDialog open onOpenChange={onOpenChange} table={table} />
+      </TasksProvider>
     )
 
     const confirmDeleteInput = getByRole('textbox', {
@@ -131,17 +176,24 @@ describe('TasksMultiDeleteDialog', () => {
 
     await userEvent.click(deleteButton)
 
-    expect(onOpenChange).toHaveBeenCalledOnce()
-    expect(onOpenChange).toHaveBeenCalledWith(false)
-
+    await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
     await vi.waitFor(() => expect(resetRowSelection).toHaveBeenCalledOnce())
+    expect(
+      apiFetchMock.mock.calls.filter(
+        ([path, options]) =>
+          path.startsWith('/api/tasks/') &&
+          (options as { method?: string } | undefined)?.method === 'DELETE'
+      )
+    ).toHaveLength(2)
   })
 
   it('deletes successfully when press Enter key on the confirm delete input', async () => {
     const { table, resetRowSelection } = createTableMock()
     const onOpenChange = vi.fn()
     const { getByRole } = await render(
-      <TasksMultiDeleteDialog open onOpenChange={onOpenChange} table={table} />
+      <TasksProvider>
+        <TasksMultiDeleteDialog open onOpenChange={onOpenChange} table={table} />
+      </TasksProvider>
     )
 
     const confirmDeleteInput = getByRole('textbox', {
@@ -155,9 +207,8 @@ describe('TasksMultiDeleteDialog', () => {
     await expect.element(deleteButton).toBeEnabled()
 
     await userEvent.keyboard('{Enter}')
-    expect(onOpenChange).toHaveBeenCalledOnce()
-    expect(onOpenChange).toHaveBeenCalledWith(false)
 
+    await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
     await vi.waitFor(() => expect(resetRowSelection).toHaveBeenCalledOnce())
   })
 })

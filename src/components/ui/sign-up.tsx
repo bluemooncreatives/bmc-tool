@@ -41,9 +41,28 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
       <form className='grid gap-4' onSubmit={onSignUp}>
         <AuthField
+          htmlFor='username'
+          label='Username'
+          delayClassName='animate-delay-300'
+        >
+          <Input
+            id='username'
+            name='username'
+            autoComplete='username'
+            required
+            minLength={2}
+            maxLength={30}
+            pattern='[A-Za-z0-9][A-Za-z0-9._-]*'
+            title='Use letters, numbers, periods, underscores, or hyphens.'
+            placeholder='bmc-team-member'
+            disabled={isLoading}
+          />
+        </AuthField>
+
+        <AuthField
           htmlFor='email'
           label='Email Address'
-          delayClassName='animate-delay-300'
+          delayClassName='animate-delay-400'
         >
           <Input
             id='email'
@@ -59,7 +78,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <AuthField
           htmlFor='password'
           label='Password'
-          delayClassName='animate-delay-400'
+          delayClassName='animate-delay-500'
         >
           <PasswordInput
             id='password'
@@ -74,7 +93,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <AuthField
           htmlFor='confirmPassword'
           label='Confirm Password'
-          delayClassName='animate-delay-500'
+          delayClassName='animate-delay-600'
         >
           <PasswordInput
             id='confirmPassword'

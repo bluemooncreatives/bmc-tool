@@ -18,6 +18,7 @@ export function SignUp() {
     event.preventDefault()
 
     const formData = new FormData(event.currentTarget)
+    const username = String(formData.get('username') ?? '')
     const email = String(formData.get('email') ?? '')
     const password = String(formData.get('password') ?? '')
     const confirmPassword = String(formData.get('confirmPassword') ?? '')
@@ -47,7 +48,7 @@ export function SignUp() {
     setIsLoading(true)
 
     try {
-      const user = await auth.signUp({ email, password })
+      const user = await auth.signUp({ username, email, password })
       toast.success(
         `Account created for ${user.email}. A Super Admin can now grant module access.`
       )

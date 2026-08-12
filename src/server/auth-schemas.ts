@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { usernameSchema } from './profile'
 
 const emailField = z.email('Enter a valid email address.')
 
@@ -18,6 +19,7 @@ export const newPasswordSchema = z
   .regex(/\d/, 'Password must include a number.')
 
 export const signUpSchema = z.object({
+  username: usernameSchema,
   email: emailField,
   password: newPasswordSchema,
 })

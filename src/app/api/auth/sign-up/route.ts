@@ -6,6 +6,7 @@ import { startSession } from '@/server/session'
 import {
   getUsersCollection,
   normalizeEmail,
+  normalizeUsername,
   type UserDoc,
 } from '@/server/users'
 import { ObjectId } from 'mongodb'
@@ -38,6 +39,11 @@ export async function POST(request: Request) {
     const user: UserDoc = {
       _id: new ObjectId(),
       email,
+      username: body.data.username,
+      usernameKey: normalizeUsername(body.data.username),
+      usernameChangedAt: now,
+      emails: [{ address: email, addedAt: now }],
+      displayEmail: email,
       passwordHash: await hashPassword(body.data.password),
       role: ['user'],
       status: 'active',
@@ -67,13 +73,25 @@ export async function POST(request: Request) {
         }
       )
     }
-    // 11000 is the unique index on email rejecting a duplicate.
+    // 11000 is a unique email or username index rejecting a duplicate.
     if (
       error instanceof Error &&
       (error as Error & { code?: number }).code === 11000
     ) {
+      const duplicateField = String(
+        (error as Error & { keyPattern?: Record<string, number> }).keyPattern
+          ? Object.keys(
+              (error as Error & { keyPattern: Record<string, number> })
+                .keyPattern
+            )[0]
+          : ''
+      )
       return NextResponse.json(
-        { error: 'An account with that email already exists.' },
+        {
+          error: duplicateField.includes('username')
+            ? 'That username is already taken.'
+            : 'An account with that email already exists.',
+        },
         { status: 409 }
       )
     }

@@ -58,6 +58,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Initial server synchronization; refetch performs updates after fetch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refetch()
   }, [refetch])
 

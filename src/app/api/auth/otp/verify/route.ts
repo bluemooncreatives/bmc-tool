@@ -31,7 +31,10 @@ export async function POST(request: Request) {
       max: 30,
       windowSeconds: 10 * 60,
     })
-    const challenge = await verifyOtpChallenge(body.data)
+    const challenge = await verifyOtpChallenge({
+      ...body.data,
+      allowedPurposes: ['sign-in', 'password-reset'],
+    })
 
     if (!challenge.userId) {
       return NextResponse.json(

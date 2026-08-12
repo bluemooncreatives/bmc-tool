@@ -1,7 +1,8 @@
 import { type Collection, ObjectId } from 'mongodb'
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { sanitizeModulePermissions, type ModuleKey } from '@/lib/permissions'
 import { getSuperadminEmail, getSuperadminPassword } from './env'
+import { normalizeEmail, normalizeUsername } from './identity'
 import { getDb } from './mongodb'
 import { hashPassword } from './password'
 import { sanitizeRoles, type Role, type UserStatus } from './roles'
@@ -9,6 +10,16 @@ import { sanitizeRoles, type Role, type UserStatus } from './roles'
 export type UserDoc = {
   _id: ObjectId
   email: string
+  /** Immutable canonical account identifier used by authentication. */
+  username: string
+  /** Lower-cased username used only for case-insensitive uniqueness. */
+  usernameKey: string
+  usernameChangedAt?: Date
+  bio?: string
+  urls?: string[]
+  emails: UserEmail[]
+  /** Public/contact email. Never replaces the canonical `email` field. */
+  displayEmail: string
   passwordHash: string
   role: Role[]
   status: UserStatus
@@ -28,11 +39,19 @@ export type UserDoc = {
   updatedAt: Date
 }
 
+export type UserEmail = {
+  address: string
+  addedAt: Date
+  verifiedAt?: Date
+}
+
 /** The shape sent to the client. Never includes passwordHash. */
 export type PublicUser = {
   id: string
   accountNo: string
   email: string
+  username: string
+  displayEmail: string
   role: Role[]
   status: UserStatus
   firstName?: string
@@ -46,6 +65,8 @@ export function toPublicUser(user: UserDoc): PublicUser {
     id: user._id.toHexString(),
     accountNo: user.accountNo,
     email: user.email,
+    username: user.username,
+    displayEmail: user.displayEmail ?? user.email,
     role: sanitizeRoles(user.role),
     status: user.status ?? 'active',
     firstName: user.firstName,
@@ -55,15 +76,23 @@ export function toPublicUser(user: UserDoc): PublicUser {
   }
 }
 
-/** Emails are stored lower-cased so uniqueness is case-insensitive. */
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
+export { normalizeEmail, normalizeUsername } from './identity'
 
 /** "First Last", falling back to the email when no name is on file. */
 export function getUserDisplayName(user: UserDoc): string {
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
-  return name || user.email
+  return name || user.username || user.email
+}
+
+function legacyUsername(user: Pick<UserDoc, '_id' | 'email'>): string {
+  const base = user.email
+    .split('@')[0]
+    ?.toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^[._-]+|[._-]+$/g, '')
+  const suffix = user._id.toHexString().slice(-6)
+  const prefix = (base || 'user').slice(0, 30 - suffix.length - 1)
+  return `${prefix}-${suffix}`
 }
 
 let collectionReady: Promise<void> | undefined
@@ -75,6 +104,48 @@ async function prepareUsersCollection(
 
   const now = new Date()
   const email = normalizeEmail(getSuperadminEmail())
+
+  // Backfill template-era accounts before enforcing the new unique indexes.
+  // The ObjectId suffix makes generated usernames deterministic and collision
+  // safe while still allowing the user to choose a friendlier name later.
+  const legacyUsers = await users
+    .find({
+      $or: [
+        { usernameKey: { $exists: false } },
+        { emails: { $exists: false } },
+        { displayEmail: { $exists: false } },
+      ],
+    })
+    .toArray()
+  for (const user of legacyUsers) {
+    const username = user.username?.trim() || legacyUsername(user)
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          username,
+          usernameKey: normalizeUsername(username),
+          emails:
+            user.emails?.length > 0
+              ? user.emails
+              : [
+                  {
+                    address: user.email,
+                    addedAt: user.createdAt ?? now,
+                    ...(user.emailVerifiedAt
+                      ? { verifiedAt: user.emailVerifiedAt }
+                      : {}),
+                  },
+                ],
+          displayEmail: user.displayEmail ?? user.email,
+        },
+      }
+    )
+  }
+  await Promise.all([
+    users.createIndex({ usernameKey: 1 }, { unique: true }),
+    users.createIndex({ 'emails.address': 1 }, { unique: true }),
+  ])
 
   // Normalize documents from the dashboard template. Access remains
   // deny-by-default until the owner grants individual modules. The configured
@@ -115,6 +186,10 @@ async function prepareUsersCollection(
   }
   const bootstrapPassword =
     configuredPassword ?? randomBytes(32).toString('base64url')
+  const ownerUsername = `bmc-owner-${createHash('sha256')
+    .update(email)
+    .digest('hex')
+    .slice(0, 8)}`
 
   // setOnInsert makes the configured password a one-time bootstrap secret.
   // Changing the environment later cannot silently replace a real password.
@@ -125,6 +200,10 @@ async function prepareUsersCollection(
         _id: new ObjectId(),
         passwordHash: await hashPassword(bootstrapPassword),
         accountNo: 'BMC-SUPERADMIN',
+        username: ownerUsername,
+        usernameKey: normalizeUsername(ownerUsername),
+        emails: [{ address: email, addedAt: now, verifiedAt: now }],
+        displayEmail: email,
         firstName: 'Blue Moon',
         lastName: 'Creatives',
         tokenVersion: 0,

@@ -18,7 +18,9 @@ export function AppSidebar() {
   const user = useAuthStore((state) => state.auth.user)
   const navGroups = user ? filterNavGroups(sidebarData.navGroups, user) : []
   const name =
-    [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'BMC Team'
+    user?.username ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+    'BMC Team'
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
       <SidebarHeader>
@@ -33,7 +35,7 @@ export function AppSidebar() {
         <NavUser
           user={{
             name,
-            email: user?.email ?? sidebarData.user.email,
+            email: user?.displayEmail ?? user?.email ?? sidebarData.user.email,
             avatar: sidebarData.user.avatar,
           }}
           permissions={user}

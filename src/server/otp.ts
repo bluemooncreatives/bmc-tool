@@ -194,7 +194,12 @@ export async function createOtpChallenge(input: {
 }
 
 export async function resendOtpChallenge(
-  challengeId: string
+  challengeId: string,
+  expected?: {
+    userId?: ObjectId
+    purpose?: OtpPurpose
+    allowedPurposes?: OtpPurpose[]
+  }
 ): Promise<OtpChallengeDoc> {
   const id = parseChallengeId(challengeId)
   if (!id) throw new OtpError('This verification request is invalid.', 400)
@@ -203,6 +208,11 @@ export async function resendOtpChallenge(
   const previous = await challenges.findOne({ _id: id })
   if (
     !previous ||
+    (expected &&
+      ((expected.userId && !previous.userId?.equals(expected.userId)) ||
+        (expected.purpose && previous.purpose !== expected.purpose) ||
+        (expected.allowedPurposes &&
+          !expected.allowedPurposes.includes(previous.purpose)))) ||
     previous.consumedAt ||
     previous.supersededAt ||
     previous.expiresAt <= new Date()
@@ -225,6 +235,9 @@ export async function resendOtpChallenge(
 export async function verifyOtpChallenge(input: {
   challengeId: string
   code: string
+  expectedUserId?: ObjectId
+  expectedPurpose?: OtpPurpose
+  allowedPurposes?: OtpPurpose[]
 }): Promise<OtpChallengeDoc> {
   const id = parseChallengeId(input.challengeId)
   if (!id) throw new OtpError('This verification request is invalid.', 400)
@@ -241,6 +254,11 @@ export async function verifyOtpChallenge(input: {
       supersededAt: { $exists: false },
       expiresAt: { $gt: now },
       attempts: { $lt: OTP_MAX_ATTEMPTS },
+      ...(input.expectedUserId ? { userId: input.expectedUserId } : {}),
+      ...(input.expectedPurpose ? { purpose: input.expectedPurpose } : {}),
+      ...(input.allowedPurposes
+        ? { purpose: { $in: input.allowedPurposes } }
+        : {}),
     },
     { $inc: { attempts: 1 } },
     { returnDocument: 'after' }

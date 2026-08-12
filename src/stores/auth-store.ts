@@ -5,6 +5,8 @@ export interface AuthUser {
   id: string
   accountNo: string
   email: string
+  username: string
+  displayEmail: string
   role: string[]
   status?: 'active' | 'inactive' | 'invited' | 'suspended'
   firstName?: string
@@ -20,6 +22,7 @@ export interface AuthUser {
 export type AuthStatus = 'pending' | 'authenticated' | 'unauthenticated'
 
 type Credentials = { email: string; password: string }
+type SignUpCredentials = Credentials & { username: string }
 /** rememberMe=false keeps the session only until the browser closes. */
 type SignInCredentials = Credentials & { rememberMe?: boolean }
 type SessionResponse = { user: AuthUser }
@@ -40,7 +43,7 @@ interface AuthState {
     /** Resolves the session from the httpOnly cookies. Safe to call repeatedly. */
     hydrate: () => Promise<AuthUser | null>
     signIn: (credentials: SignInCredentials) => Promise<SignInResult>
-    signUp: (credentials: Credentials) => Promise<AuthUser>
+    signUp: (credentials: SignUpCredentials) => Promise<AuthUser>
     signOut: () => Promise<void>
     /** Clears local state only — use signOut to also drop the server session. */
     reset: () => void

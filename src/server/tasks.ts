@@ -1,4 +1,4 @@
-import { type Collection, ObjectId } from 'mongodb'
+import { type Collection, type ObjectId } from 'mongodb'
 import { getDb } from './mongodb'
 
 export type TaskDoc = {

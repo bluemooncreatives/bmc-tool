@@ -38,7 +38,7 @@ function getTransporter(): Transporter | null {
   return transporter
 }
 
-export type OtpMailPurpose = 'sign-in' | 'password-reset'
+export type OtpMailPurpose = 'sign-in' | 'password-reset' | 'email-verification'
 
 export async function sendOtpEmail(input: {
   to: string
@@ -60,11 +60,18 @@ export async function sendOtpEmail(input: {
     return
   }
 
-  const isSignIn = input.purpose === 'sign-in'
-  const action = isSignIn ? 'sign in' : 'reset your password'
-  const subject = isSignIn
-    ? 'Your Blue Moon Creatives sign-in code'
-    : 'Your Blue Moon Creatives password reset code'
+  const action =
+    input.purpose === 'sign-in'
+      ? 'sign in'
+      : input.purpose === 'password-reset'
+        ? 'reset your password'
+        : 'verify this email address'
+  const subject =
+    input.purpose === 'sign-in'
+      ? 'Your Blue Moon Creatives sign-in code'
+      : input.purpose === 'password-reset'
+        ? 'Your Blue Moon Creatives password reset code'
+        : 'Verify your Blue Moon Creatives email address'
   const safeCode = escapeHtml(input.code)
 
   await mailer.sendMail({

@@ -6,7 +6,9 @@ import { vi } from 'vitest'
  * `resetRowSelection` (e.g. multi-delete dialogs).
  */
 export function createTableMock(rowCount = 2) {
-  const rows = Array.from({ length: rowCount }, () => ({}))
+  const rows = Array.from({ length: rowCount }, (_, index) => ({
+    original: { id: `task-${index + 1}` },
+  }))
   const resetRowSelection = vi.fn()
   const table = {
     getFilteredSelectedRowModel: () => ({ rows }),

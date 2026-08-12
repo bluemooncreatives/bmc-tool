@@ -18,6 +18,8 @@ const sampleUser = {
   id: '65f0000000000000000000aa',
   accountNo: 'ACC-1',
   email: 'user@example.com',
+  username: 'sample-user',
+  displayEmail: 'user@example.com',
   role: ['user'],
 }
 

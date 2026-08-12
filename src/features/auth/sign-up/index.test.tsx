@@ -26,6 +26,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 describe('SignUp page', () => {
   let screen: RenderResult
+  let usernameInput: Locator
   let emailInput: Locator
   let passwordInput: Locator
   let confirmPasswordInput: Locator
@@ -35,6 +36,7 @@ describe('SignUp page', () => {
     vi.clearAllMocks()
 
     screen = await render(<SignUp />)
+    usernameInput = screen.getByLabelText(/^Username$/i)
     emailInput = screen.getByLabelText(/^Email Address$/i)
     passwordInput = screen.getByLabelText(/^Password$/i)
     confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i)
@@ -43,6 +45,7 @@ describe('SignUp page', () => {
 
   it('renders the fields and submit button', async () => {
     await expect.element(emailInput).toBeInTheDocument()
+    await expect.element(usernameInput).toBeInTheDocument()
     await expect.element(passwordInput).toBeInTheDocument()
     await expect.element(confirmPasswordInput).toBeInTheDocument()
     await expect.element(submitButton).toBeInTheDocument()
@@ -50,6 +53,7 @@ describe('SignUp page', () => {
 
   it('shows a mismatch error and does not submit when passwords differ', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
+    await userEvent.fill(usernameInput, 'alex')
     await userEvent.fill(passwordInput, 'Secure123')
     await userEvent.fill(confirmPasswordInput, 'Secure124')
     await userEvent.click(submitButton)
@@ -62,6 +66,7 @@ describe('SignUp page', () => {
 
   it('rejects a password shorter than 8 characters', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
+    await userEvent.fill(usernameInput, 'alex')
     await userEvent.fill(passwordInput, 'Short1')
     await userEvent.fill(confirmPasswordInput, 'Short1')
     await userEvent.click(submitButton)
@@ -74,6 +79,7 @@ describe('SignUp page', () => {
 
   it('creates a deny-by-default account and opens the access notice', async () => {
     await userEvent.fill(emailInput, 'a@b.com')
+    await userEvent.fill(usernameInput, 'alex')
     await userEvent.fill(passwordInput, 'Secure123')
     await userEvent.fill(confirmPasswordInput, 'Secure123')
     await userEvent.click(submitButton)
@@ -82,6 +88,7 @@ describe('SignUp page', () => {
     // confirmPassword is a client-side check only and is not sent.
     expect(signUpMock).toHaveBeenCalledWith({
       email: 'a@b.com',
+      username: 'alex',
       password: 'Secure123',
     })
 
@@ -96,6 +103,7 @@ describe('SignUp page', () => {
     )
 
     await userEvent.fill(emailInput, 'taken@b.com')
+    await userEvent.fill(usernameInput, 'alex')
     await userEvent.fill(passwordInput, 'Secure123')
     await userEvent.fill(confirmPasswordInput, 'Secure123')
     await userEvent.click(submitButton)
