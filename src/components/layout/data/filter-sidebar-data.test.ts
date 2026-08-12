@@ -7,7 +7,18 @@ const groups: NavGroup[] = [
     title: 'Operations',
     items: [
       { title: 'Home', url: '/', permission: 'home' },
-      { title: 'Tasks', url: '/tasks', permission: 'tasks' },
+      {
+        title: 'Tasks',
+        items: [
+          { title: 'All Tasks', url: '/tasks', permission: 'tasks' },
+          {
+            title: 'Active Tasks',
+            url: '/tasks?view=active',
+            permission: 'tasks_active',
+            permissionAnyOf: ['tasks', 'tasks_active'],
+          },
+        ],
+      },
     ],
   },
   {
@@ -41,9 +52,25 @@ const user = {
 describe('filterNavGroups display preferences', () => {
   it('hides selected permitted modules without changing authorization', () => {
     const result = filterNavGroups(groups, user, ['tasks', 'settings_profile'])
-    expect(result[0]?.items.map((item) => item.title)).toEqual(['Home'])
+    expect(result[0]?.items.map((item) => item.title)).toEqual([
+      'Home',
+      'Tasks',
+    ])
+    expect(result[0]?.items[1]?.items?.map((item) => item.title)).toEqual([
+      'Active Tasks',
+    ])
     expect(result[1]?.items[0]?.items?.map((item) => item.title)).toEqual([
       'Display',
+    ])
+  })
+
+  it('shows only Active Tasks when that is the only task permission', () => {
+    const result = filterNavGroups(groups, {
+      role: ['user'],
+      modulePermissions: ['tasks_active'],
+    })
+    expect(result[0]?.items[0]?.items?.map((item) => item.title)).toEqual([
+      'Active Tasks',
     ])
   })
 

@@ -1,14 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, ApiError } from '@/lib/api-client'
+import { isTaskActive } from '@/lib/tasks'
 import useDialogState from '@/hooks/use-dialog-state'
 import { type Task } from '../data/schema'
 
 type TasksDialogType =
-  | 'create'
-  | 'update'
-  | 'delete'
-  | 'import'
-  | 'manage-options'
+  'create' | 'update' | 'delete' | 'import' | 'manage-options'
 
 export type TaskInput = {
   id: string
@@ -37,25 +34,43 @@ type TasksContextType = {
 
 const TasksContext = React.createContext<TasksContextType | null>(null)
 
-export function TasksProvider({ children }: { children: React.ReactNode }) {
+export type TaskScope = 'all' | 'active'
+
+export function TasksProvider({
+  children,
+  scope = 'all',
+}: {
+  children: React.ReactNode
+  scope?: TaskScope
+}) {
   const [open, setOpen] = useDialogState<TasksDialogType>(null)
   const [currentRow, setCurrentRow] = useState<Task | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const loadRequest = useRef(0)
 
   const refetch = useCallback(async () => {
+    const requestId = ++loadRequest.current
     setIsLoading(true)
     setError(null)
     try {
-      const response = await apiFetch<{ tasks: Task[] }>('/api/tasks')
-      setTasks(response.tasks)
+      const response = await apiFetch<{ tasks: Task[] }>(
+        scope === 'active' ? '/api/tasks?scope=active' : '/api/tasks'
+      )
+      if (requestId !== loadRequest.current) return
+      setTasks(
+        scope === 'active'
+          ? response.tasks.filter((task) => isTaskActive(task.status))
+          : response.tasks
+      )
     } catch (err) {
+      if (requestId !== loadRequest.current) return
       setError(err instanceof ApiError ? err.message : 'Could not load tasks.')
     } finally {
-      setIsLoading(false)
+      if (requestId === loadRequest.current) setIsLoading(false)
     }
-  }, [])
+  }, [scope])
 
   useEffect(() => {
     // Initial server synchronization; refetch performs updates after fetch.
@@ -63,25 +78,38 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     void refetch()
   }, [refetch])
 
-  const createTask = useCallback(async (input: TaskInput) => {
-    const response = await apiFetch<{ task: Task }>('/api/tasks', {
-      method: 'POST',
-      body: input,
-    })
-    setTasks((prev) => [response.task, ...prev])
-    return response.task
-  }, [])
+  const createTask = useCallback(
+    async (input: TaskInput) => {
+      const response = await apiFetch<{ task: Task }>('/api/tasks', {
+        method: 'POST',
+        body: input,
+      })
+      setTasks((prev) =>
+        scope === 'active' && !isTaskActive(response.task.status)
+          ? prev
+          : [response.task, ...prev]
+      )
+      return response.task
+    },
+    [scope]
+  )
 
-  const updateTask = useCallback(async (id: string, input: Partial<TaskInput>) => {
-    const response = await apiFetch<{ task: Task }>(
-      `/api/tasks/${encodeURIComponent(id)}`,
-      { method: 'PATCH', body: input }
-    )
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? response.task : task))
-    )
-    return response.task
-  }, [])
+  const updateTask = useCallback(
+    async (id: string, input: Partial<TaskInput>) => {
+      const response = await apiFetch<{ task: Task }>(
+        `/api/tasks/${encodeURIComponent(id)}`,
+        { method: 'PATCH', body: input }
+      )
+      setTasks((prev) => {
+        if (scope === 'active' && !isTaskActive(response.task.status)) {
+          return prev.filter((task) => task.id !== id)
+        }
+        return prev.map((task) => (task.id === id ? response.task : task))
+      })
+      return response.task
+    },
+    [scope]
+  )
 
   const deleteTask = useCallback(async (id: string) => {
     await apiFetch(`/api/tasks/${encodeURIComponent(id)}`, {

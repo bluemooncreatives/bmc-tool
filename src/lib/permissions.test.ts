@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   canAccessPath,
-  hasModulePermission,
   hasAccountSettingsAccess,
+  hasActiveTasksAccess,
+  hasModulePermission,
   moduleForPath,
   sanitizeModulePermissions,
 } from './permissions'
@@ -18,6 +19,14 @@ describe('module permissions', () => {
     expect(hasModulePermission(user, 'leads')).toBe(false)
     expect(canAccessPath(user, '/tasks')).toBe(true)
     expect(canAccessPath(user, '/leads')).toBe(false)
+  })
+
+  it('distributes Active Tasks independently while preserving full Tasks access', () => {
+    const activeOnly = { role: ['user'], modulePermissions: ['tasks_active'] }
+    expect(hasActiveTasksAccess(activeOnly)).toBe(true)
+    expect(hasModulePermission(activeOnly, 'tasks')).toBe(false)
+    expect(canAccessPath(activeOnly, '/tasks')).toBe(true)
+    expect(hasActiveTasksAccess(user)).toBe(true)
   })
 
   it('matches the most specific nested settings module', () => {

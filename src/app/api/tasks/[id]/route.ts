@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import {
   assertSameOrigin,
   AuthorizationError,
@@ -11,6 +10,7 @@ import {
   toPublicTask,
   type TaskDoc,
 } from '@/server/tasks'
+import { NextResponse } from 'next/server'
 import { hasModulePermission } from '@/lib/permissions'
 
 export const runtime = 'nodejs'

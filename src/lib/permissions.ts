@@ -17,7 +17,7 @@ export const MODULE_DEFINITIONS = [
     key: 'tasks_active',
     title: 'Active Tasks',
     description: 'View and manage tasks that are still in progress.',
-    path: '/tasks/active',
+    path: '/tasks',
     group: 'Operations',
   },
   {
@@ -188,7 +188,7 @@ export function canAccessPath(
     return hasAccountSettingsAccess(subject)
   }
 
-  if (pathname === '/tasks/active') return hasActiveTasksAccess(subject)
+  if (pathname === '/tasks') return hasActiveTasksAccess(subject)
 
   const module = moduleForPath(pathname)
   return module ? hasModulePermission(subject, module) : true

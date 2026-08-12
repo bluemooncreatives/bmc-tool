@@ -1,5 +1,7 @@
 import z from 'zod'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useAuthStore } from '@/stores/auth-store'
+import { hasActiveTasksAccess, hasModulePermission } from '@/lib/permissions'
 import { Tasks } from '@/features/tasks'
 
 const taskSearchSchema = z.object({
@@ -11,9 +13,30 @@ const taskSearchSchema = z.object({
   status: z.array(z.string()).optional().catch([]),
   priority: z.array(z.string()).optional().catch([]),
   filter: z.string().optional().catch(''),
+  view: z.enum(['active']).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/tasks/')({
   validateSearch: taskSearchSchema,
-  component: Tasks,
+  beforeLoad: ({ search }) => {
+    const user = useAuthStore.getState().auth.user
+    if (!user) return
+    const allowed =
+      search.view === 'active'
+        ? hasActiveTasksAccess(user)
+        : hasModulePermission(user, 'tasks')
+    if (!allowed) throw redirect({ to: '/403' })
+  },
+  component: TasksRoute,
 })
+
+function TasksRoute() {
+  const search = Route.useSearch()
+  return (
+    <Tasks
+      search={search}
+      navigate={Route.useNavigate()}
+      scope={search.view === 'active' ? 'active' : 'all'}
+    />
+  )
+}

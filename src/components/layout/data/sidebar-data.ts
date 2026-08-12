@@ -40,7 +40,7 @@ export const sidebarData: SidebarData = {
             },
             {
               title: 'Active Tasks',
-              url: '/tasks/active',
+              url: '/tasks?view=active',
               icon: MODULE_ICONS.tasks_active,
               permission: 'tasks_active',
               permissionAnyOf: ['tasks', 'tasks_active'],

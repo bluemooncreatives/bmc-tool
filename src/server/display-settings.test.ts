@@ -22,6 +22,7 @@ describe('display settings', () => {
     expect(availableSidebarItems(user()).map((item) => item.id)).toEqual([
       'home',
       'tasks',
+      'tasks_active',
       'settings_display',
     ])
   })
@@ -30,7 +31,11 @@ describe('display settings', () => {
     const preferences = serializeDisplaySettings(
       user({ hiddenSidebarItems: ['tasks', 'settings_display'] })
     )
-    expect(preferences.selectedItems).toEqual(['home', 'settings_display'])
+    expect(preferences.selectedItems).toEqual([
+      'home',
+      'tasks_active',
+      'settings_display',
+    ])
   })
 
   it('preserves hidden preferences for temporarily unavailable modules', () => {
@@ -39,7 +44,7 @@ describe('display settings', () => {
         'home',
         'settings_display',
       ])
-    ).toEqual(['leads', 'tasks'])
+    ).toEqual(['leads', 'tasks', 'tasks_active'])
   })
 
   it('rejects duplicate and unknown module keys', () => {

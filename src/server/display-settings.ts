@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import {
-  hasModulePermission,
   hasAccountSettingsAccess,
+  hasActiveTasksAccess,
+  hasModulePermission,
   isModuleKey,
   MODULE_DEFINITIONS,
   sanitizeModulePermissions,
@@ -35,7 +36,9 @@ export function availableSidebarItems(user: UserDoc) {
       item.key !== 'settings_account' &&
       (item.key === 'settings_profile'
         ? hasAccountSettingsAccess(user)
-        : hasModulePermission(user, item.key))
+        : item.key === 'tasks_active'
+          ? hasActiveTasksAccess(user)
+          : hasModulePermission(user, item.key))
   ).map((item) => ({
     id: item.key,
     label: item.title,

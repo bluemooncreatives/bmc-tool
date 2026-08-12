@@ -7,13 +7,24 @@ export function ForbiddenError() {
   const navigate = useNavigate()
   const { history } = useRouter()
   const { auth } = useAuthStore()
-  const fallback = auth.user
+  const fallbackModule = auth.user
     ? isSuperadmin(auth.user)
-      ? '/'
+      ? undefined
       : MODULE_DEFINITIONS.find((module) =>
           auth.user?.modulePermissions?.includes(module.key)
-        )?.path
+        )
     : undefined
+  const fallback = isSuperadmin(auth.user ?? { role: [] })
+    ? '/'
+    : fallbackModule?.path
+
+  function openFallback() {
+    if (fallbackModule?.key === 'tasks_active') {
+      navigate({ to: '/tasks', search: { view: 'active' } })
+      return
+    }
+    if (fallback) navigate({ to: fallback })
+  }
 
   async function signOut() {
     await auth.signOut().catch(() => undefined)
@@ -33,9 +44,7 @@ export function ForbiddenError() {
             Go Back
           </Button>
           {fallback ? (
-            <Button onClick={() => navigate({ to: fallback })}>
-              Open an allowed module
-            </Button>
+            <Button onClick={openFallback}>Open an allowed module</Button>
           ) : (
             <Button onClick={() => void signOut()}>Return to sign in</Button>
           )}

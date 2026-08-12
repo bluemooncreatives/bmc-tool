@@ -63,7 +63,7 @@ describe('PermissionManager', () => {
 
     await expect.element(selectedEmail).toHaveClass('break-all')
     await expect
-      .element(screen.getByText('0 of 14 modules selected'))
+      .element(screen.getByText('0 of 15 modules selected'))
       .toBeInTheDocument()
   })
 })

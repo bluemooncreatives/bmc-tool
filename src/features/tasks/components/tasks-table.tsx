@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getRouteApi } from '@tanstack/react-router'
 import {
   type SortingState,
   type VisibilityState,
@@ -13,7 +12,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
-import { useTableUrlState } from '@/hooks/use-table-url-state'
+import { useTableUrlState, type NavigateFn } from '@/hooks/use-table-url-state'
 import {
   Table,
   TableBody,
@@ -29,9 +28,17 @@ import { DataTableBulkActions } from './data-table-bulk-actions'
 import { getTasksColumns } from './tasks-columns'
 import { useTasks } from './tasks-provider'
 
-const route = getRouteApi('/_authenticated/tasks/')
+type TasksTableProps = {
+  search: Record<string, unknown>
+  navigate: NavigateFn
+  emptyMessage?: string
+}
 
-export function TasksTable() {
+export function TasksTable({
+  search,
+  navigate,
+  emptyMessage = 'No tasks found.',
+}: TasksTableProps) {
   const { tasks: data, isLoading, error } = useTasks()
 
   // Local UI-only states
@@ -68,8 +75,8 @@ export function TasksTable() {
     onPaginationChange,
     ensurePageInRange,
   } = useTableUrlState({
-    search: route.useSearch(),
-    navigate: route.useNavigate(),
+    search,
+    navigate,
     pagination: { defaultPage: 1, defaultPageSize: 10 },
     globalFilter: { enabled: true, key: 'filter' },
     columnFilters: [
@@ -176,7 +183,10 @@ export function TasksTable() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center'>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center'
+                >
                   Loading tasks...
                 </TableCell>
               </TableRow>
@@ -217,7 +227,7 @@ export function TasksTable() {
                   colSpan={columns.length}
                   className='h-24 text-center'
                 >
-                  No results.
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             )}
