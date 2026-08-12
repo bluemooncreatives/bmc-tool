@@ -39,6 +39,16 @@ export async function requireModulePermission(
   return user
 }
 
+export async function requireAnyModulePermission(
+  modules: readonly ModuleKey[]
+): Promise<UserDoc> {
+  const user = await requireAuthenticatedUser()
+  if (!modules.some((module) => hasModulePermission(user, module))) {
+    throw new AuthorizationError('You do not have access to this module.', 403)
+  }
+  return user
+}
+
 /**
  * Cookie auth plus JSON already blocks ordinary form CSRF. This additionally
  * rejects cross-site fetches and mismatched Origin headers on sensitive writes.

@@ -3,11 +3,19 @@ import { NextResponse } from 'next/server'
 import {
   assertSameOrigin,
   AuthorizationError,
+  requireAnyModulePermission,
   requireModulePermission,
 } from '@/server/authorization'
 import { createTaskSchema } from '@/server/task-schemas'
-import { getTasksCollection, toPublicTask, type TaskDoc } from '@/server/tasks'
+import {
+  activeTaskFilter,
+  getTasksCollection,
+  toPublicTask,
+  type TaskDoc,
+} from '@/server/tasks'
 import { getUserDisplayName } from '@/server/users'
+import { hasModulePermission } from '@/lib/permissions'
+import { isTaskActive } from '@/lib/tasks'
 
 export const runtime = 'nodejs'
 
@@ -23,12 +31,26 @@ function errorResponse(error: unknown) {
   )
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    await requireModulePermission('tasks')
+    const scope = new URL(request.url).searchParams.get('scope')
+    if (scope !== null && scope !== 'active') {
+      return NextResponse.json(
+        { error: 'The requested task scope is invalid.' },
+        { status: 400 }
+      )
+    }
+    if (scope === 'active') {
+      await requireAnyModulePermission(['tasks', 'tasks_active'])
+    } else {
+      await requireModulePermission('tasks')
+    }
 
     const tasks = await getTasksCollection()
-    const results = await tasks.find({}).sort({ createdAt: -1 }).toArray()
+    const results = await tasks
+      .find(scope === 'active' ? activeTaskFilter() : {})
+      .sort({ createdAt: -1 })
+      .toArray()
 
     return NextResponse.json(
       { tasks: results.map(toPublicTask) },
@@ -51,7 +73,16 @@ export async function POST(request: Request) {
 
   try {
     assertSameOrigin(request)
-    const user = await requireModulePermission('tasks')
+    const user = await requireAnyModulePermission(['tasks', 'tasks_active'])
+    if (
+      !hasModulePermission(user, 'tasks') &&
+      !isTaskActive(parsed.data.status)
+    ) {
+      return NextResponse.json(
+        { error: 'Active Tasks access can only create active work.' },
+        { status: 403 }
+      )
+    }
 
     const tasks = await getTasksCollection()
     const now = new Date()

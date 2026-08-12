@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server'
 import {
   assertSameOrigin,
   AuthorizationError,
-  requireModulePermission,
+  requireAnyModulePermission,
 } from '@/server/authorization'
 import { updateTaskSchema } from '@/server/task-schemas'
-import { getTasksCollection, toPublicTask, type TaskDoc } from '@/server/tasks'
+import {
+  activeTaskFilter,
+  getTasksCollection,
+  toPublicTask,
+  type TaskDoc,
+} from '@/server/tasks'
+import { hasModulePermission } from '@/lib/permissions'
 
 export const runtime = 'nodejs'
 
@@ -42,7 +48,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
   try {
     assertSameOrigin(request)
-    await requireModulePermission('tasks')
+    const user = await requireAnyModulePermission(['tasks', 'tasks_active'])
 
     const tasks = await getTasksCollection()
     const now = new Date()
@@ -58,14 +64,20 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     if (parsed.data.taggedTo !== undefined)
       setFields.taggedTo = parsed.data.taggedTo
 
+    const taskFilter = hasModulePermission(user, 'tasks')
+      ? { taskNumber: id }
+      : { $and: [{ taskNumber: id }, activeTaskFilter()] }
     const updated = await tasks.findOneAndUpdate(
-      { taskNumber: id },
+      taskFilter,
       { $set: setFields },
       { returnDocument: 'after' }
     )
 
     if (!updated) {
-      return NextResponse.json({ error: 'Task not found.' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Task not found or no longer active.' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json({ task: toPublicTask(updated) })
@@ -89,12 +101,18 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   const { id } = await params
   try {
     assertSameOrigin(request)
-    await requireModulePermission('tasks')
+    const user = await requireAnyModulePermission(['tasks', 'tasks_active'])
 
     const tasks = await getTasksCollection()
-    const result = await tasks.deleteOne({ taskNumber: id })
+    const taskFilter = hasModulePermission(user, 'tasks')
+      ? { taskNumber: id }
+      : { $and: [{ taskNumber: id }, activeTaskFilter()] }
+    const result = await tasks.deleteOne(taskFilter)
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Task not found.' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Task not found or no longer active.' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json({ ok: true })

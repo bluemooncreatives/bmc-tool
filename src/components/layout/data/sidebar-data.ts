@@ -30,9 +30,22 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Tasks',
-          url: '/tasks',
           icon: MODULE_ICONS.tasks,
-          permission: 'tasks',
+          items: [
+            {
+              title: 'All Tasks',
+              url: '/tasks',
+              icon: MODULE_ICONS.tasks,
+              permission: 'tasks',
+            },
+            {
+              title: 'Active Tasks',
+              url: '/tasks/active',
+              icon: MODULE_ICONS.tasks_active,
+              permission: 'tasks_active',
+              permissionAnyOf: ['tasks', 'tasks_active'],
+            },
+          ],
         },
         {
           title: 'Leads',

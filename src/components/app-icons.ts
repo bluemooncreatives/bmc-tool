@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChartNoAxesCombined,
   CircleHelp,
+  CircleDotDashed,
   Clock3,
   ContactRound,
   FileText,
@@ -24,6 +25,7 @@ import { type ModuleKey } from '@/lib/permissions'
 export const MODULE_ICONS = {
   home: Home,
   tasks: ListTodo,
+  tasks_active: CircleDotDashed,
   leads: ContactRound,
   quotations: FileText,
   calendars: CalendarDays,

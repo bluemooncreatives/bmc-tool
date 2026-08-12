@@ -8,9 +8,16 @@ export const MODULE_DEFINITIONS = [
   },
   {
     key: 'tasks',
-    title: 'Tasks',
-    description: 'Task lists, ownership, and delivery status.',
+    title: 'All Tasks',
+    description: 'View and manage every task, including completed work.',
     path: '/tasks',
+    group: 'Operations',
+  },
+  {
+    key: 'tasks_active',
+    title: 'Active Tasks',
+    description: 'View and manage tasks that are still in progress.',
+    path: '/tasks/active',
     group: 'Operations',
   },
   {
@@ -144,6 +151,13 @@ export function hasAccountSettingsAccess(subject: PermissionSubject): boolean {
   )
 }
 
+export function hasActiveTasksAccess(subject: PermissionSubject): boolean {
+  return (
+    hasModulePermission(subject, 'tasks') ||
+    hasModulePermission(subject, 'tasks_active')
+  )
+}
+
 /** Resolves nested routes by longest prefix so /settings/account beats /settings. */
 export function moduleForPath(pathname: string): ModuleKey | null {
   if (pathname === '/') return 'home'
@@ -173,6 +187,8 @@ export function canAccessPath(
   if (pathname === '/settings' || pathname === '/settings/account') {
     return hasAccountSettingsAccess(subject)
   }
+
+  if (pathname === '/tasks/active') return hasActiveTasksAccess(subject)
 
   const module = moduleForPath(pathname)
   return module ? hasModulePermission(subject, module) : true

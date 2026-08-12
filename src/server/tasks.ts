@@ -1,4 +1,5 @@
-import { type Collection, type ObjectId } from 'mongodb'
+import { type Collection, type Filter, type ObjectId } from 'mongodb'
+import { TERMINAL_TASK_STATUS_PATTERN } from '@/lib/tasks'
 import { getDb } from './mongodb'
 
 export type TaskDoc = {
@@ -45,6 +46,10 @@ export function toPublicTask(task: TaskDoc): PublicTask {
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   }
+}
+
+export function activeTaskFilter(): Filter<TaskDoc> {
+  return { status: { $not: TERMINAL_TASK_STATUS_PATTERN } }
 }
 
 let collectionReady: Promise<void> | undefined

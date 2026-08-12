@@ -14,9 +14,9 @@ function canSee(
   const permissions =
     item.permissionAnyOf ?? (item.permission ? [item.permission] : [])
   if (
-    permissions.length > 0 &&
-    !permissions.includes('settings_display') &&
-    permissions.some((permission) => hiddenPermissions.has(permission))
+    item.permission &&
+    item.permission !== 'settings_display' &&
+    hiddenPermissions.has(item.permission)
   ) {
     return false
   }

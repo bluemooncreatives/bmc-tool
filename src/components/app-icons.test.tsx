@@ -10,6 +10,7 @@ describe('application icon mapping', () => {
       permissions: 'lucide-key-round',
       home: 'lucide-house',
       tasks: 'lucide-list-todo',
+      tasks_active: 'lucide-circle-dot-dashed',
       leads: 'lucide-contact-round',
       quotations: 'lucide-file-text',
       calendars: 'lucide-calendar-days',
