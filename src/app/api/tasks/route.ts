@@ -7,7 +7,10 @@ import {
 import { createTaskSchema } from '@/server/task-schemas'
 import {
   getTasksCollection,
+  nextTaskNumber,
   organizationTaskFilter,
+  resolveAssignee,
+  statusFields,
   toPublicTask,
   type TaskDoc,
 } from '@/server/tasks'
@@ -88,17 +91,18 @@ export async function POST(request: Request) {
     const doc: TaskDoc = {
       _id: new ObjectId(),
       organizationId: user.organizationId,
-      taskNumber: parsed.data.id,
+      taskNumber: await nextTaskNumber(user.organizationId),
       title: parsed.data.title,
       description: parsed.data.description,
-      status: parsed.data.status,
+      ...statusFields(parsed.data.status),
       label: parsed.data.label,
       priority: parsed.data.priority,
       taggedBy: getUserDisplayName(user),
-      taggedTo: parsed.data.taggedTo,
+      ...(await resolveAssignee(user.organizationId, parsed.data.taggedTo)),
       createdBy: user._id,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     }
 
     await tasks.insertOne(doc)
@@ -111,8 +115,10 @@ export async function POST(request: Request) {
       'code' in error &&
       error.code === 11000
     ) {
+      // Numbers come from the tenant's counter, so this means the counter fell
+      // behind the collection rather than that the caller picked a taken one.
       return NextResponse.json(
-        { error: `A task numbered "${parsed.data.id}" already exists.` },
+        { error: 'Could not allocate a task number. Please try again.' },
         { status: 409 }
       )
     }

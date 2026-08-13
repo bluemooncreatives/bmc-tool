@@ -8,7 +8,8 @@ type TasksDialogType =
   'create' | 'update' | 'delete' | 'import' | 'manage-options'
 
 export type TaskInput = {
-  id: string
+  /** Absent when creating: the server allocates the task number. */
+  id?: string
   title: string
   description?: string
   status: string

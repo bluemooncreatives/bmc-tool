@@ -213,12 +213,15 @@ describe('TasksMutateDrawer', () => {
     expect(createCall).toBeDefined()
     const body = (createCall?.[1] as { body: Record<string, unknown> }).body
     expect(body).toMatchObject({
-      id: expect.stringMatching(/^TASK-\d{4}$/),
       title: 'New task title',
       status: 'todo',
       label: 'bug',
       priority: 'low',
     })
+    // Task numbers are allocated by the server. A client-side number used to
+    // be a random 4-digit value, which collides more often than not once an
+    // organization has a few hundred tasks.
+    expect(body.id).toBeUndefined()
   })
 
   it('closes when Close is clicked', async () => {

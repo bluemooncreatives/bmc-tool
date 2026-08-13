@@ -7,6 +7,8 @@ import { updateTaskSchema } from '@/server/task-schemas'
 import {
   getTasksCollection,
   organizationTaskFilter,
+  resolveAssignee,
+  statusFields,
   toPublicTask,
   type TaskDoc,
 } from '@/server/tasks'
@@ -57,12 +59,18 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     if (parsed.data.title !== undefined) setFields.title = parsed.data.title
     if (parsed.data.description !== undefined)
       setFields.description = parsed.data.description
-    if (parsed.data.status !== undefined) setFields.status = parsed.data.status
+    if (parsed.data.status !== undefined)
+      Object.assign(setFields, statusFields(parsed.data.status))
     if (parsed.data.label !== undefined) setFields.label = parsed.data.label
     if (parsed.data.priority !== undefined)
       setFields.priority = parsed.data.priority
+    // The display email and the reference are always written together, so the
+    // two can never disagree about who a task belongs to.
     if (parsed.data.taggedTo !== undefined)
-      setFields.taggedTo = parsed.data.taggedTo
+      Object.assign(
+        setFields,
+        await resolveAssignee(user.organizationId, parsed.data.taggedTo)
+      )
 
     // The organization is part of the lookup, so a task number from another
     // tenant simply does not resolve.
@@ -119,8 +127,11 @@ export async function DELETE(request: Request, { params }: RouteContext) {
         hasModulePermission(user, 'tasks') ? null : 'active'
       ),
     }
-    const result = await tasks.deleteOne(taskFilter)
-    if (result.deletedCount === 0) {
+    // Soft delete: the row stays for audit and its number is never reissued.
+    const result = await tasks.updateOne(taskFilter, {
+      $set: { deletedAt: new Date(), deletedBy: user._id, updatedAt: new Date() },
+    })
+    if (result.matchedCount === 0) {
       return NextResponse.json(
         { error: 'Task not found or no longer active.' },
         { status: 404 }

@@ -89,6 +89,28 @@ export function getSmtpConfig(): SmtpConfig | null {
   }
 }
 
+/**
+ * How long audit entries are kept, in days. Zero — the default — keeps them
+ * forever.
+ *
+ * Retention is opt-in on purpose. A TTL index deletes silently and
+ * irreversibly, and how long an audit trail must survive is a compliance
+ * question, not an engineering one; guessing a default here would quietly
+ * destroy the record someone later needs.
+ */
+export function getAuditRetentionDays(): number {
+  const raw = optional('AUDIT_RETENTION_DAYS')
+  if (!raw) return 0
+
+  const days = Number(raw)
+  if (!Number.isFinite(days) || days < 0) {
+    throw new Error(
+      'AUDIT_RETENTION_DAYS must be a non-negative number of days (0 keeps audit entries forever).'
+    )
+  }
+  return Math.floor(days)
+}
+
 /** Adds a scheme to bare hostnames (Vercel exposes its URLs without one). */
 function normalizeOrigin(value: string): string {
   const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`

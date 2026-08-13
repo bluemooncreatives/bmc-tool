@@ -1,4 +1,5 @@
 import { type Collection, ObjectId } from 'mongodb'
+import { applyAuditRetention } from './audit-retention'
 import { getDb } from './mongodb'
 import { type UserDoc } from './users'
 
@@ -83,6 +84,7 @@ export async function getAdminAuditCollection(): Promise<
       audit.createIndex({ createdAt: -1 }),
       audit.createIndex({ organizationId: 1, createdAt: -1 }),
       audit.createIndex({ targetUserId: 1, createdAt: -1 }),
+      applyAuditRetention(audit),
     ])
       .then(() => undefined)
       .catch((error) => {

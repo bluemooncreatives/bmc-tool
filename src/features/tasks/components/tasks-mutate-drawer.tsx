@@ -41,7 +41,9 @@ type TaskMutateDrawerProps = {
 }
 
 const formSchema = z.object({
-  id: z.string().min(1, 'Task number is required.'),
+  // Only editable when renaming an existing task; new numbers are allocated by
+  // the server so that two people creating tasks cannot land on the same one.
+  id: z.string().optional(),
   title: z.string().min(1, 'Title is required.'),
   description: z.string().optional(),
   status: z.string().min(1, 'Please select a status.'),
@@ -53,14 +55,9 @@ type TaskForm = z.infer<typeof formSchema>
 
 type DirectoryUser = { id: string; name: string; email: string }
 
-function generateTaskNumber() {
-  return `TASK-${Math.floor(1000 + Math.random() * 9000)}`
-}
-
 function getDefaultValues(currentRow?: Task): TaskForm {
   return (
     currentRow ?? {
-      id: generateTaskNumber(),
       title: '',
       description: '',
       status: '',
@@ -170,19 +167,21 @@ export function TasksMutateDrawer({
             onSubmit={form.handleSubmit(onSubmit)}
             className='flex-1 space-y-6 overflow-y-auto px-4'
           >
-            <FormField
-              control={form.control}
-              name='id'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Task Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder='e.g. TASK-1234' />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {isUpdate && (
+              <FormField
+                control={form.control}
+                name='id'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Task Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder='e.g. TASK-1234' />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name='title'

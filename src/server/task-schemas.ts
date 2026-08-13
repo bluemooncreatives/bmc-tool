@@ -7,7 +7,9 @@ const taskNumber = z
   .max(40, 'Task number must be 40 characters or fewer.')
 
 export const createTaskSchema = z.object({
-  id: taskNumber,
+  // Accepted for backwards compatibility but ignored: task numbers are
+  // allocated server-side so two clients cannot mint the same one.
+  id: taskNumber.optional(),
   title: z.string().trim().min(1, 'Title is required.').max(200),
   description: z.string().trim().max(2000).optional(),
   status: z.string().trim().min(1, 'Status is required.').max(60),
@@ -17,7 +19,10 @@ export const createTaskSchema = z.object({
   taggedTo: z.string().trim().max(200).optional(),
 })
 
-export const updateTaskSchema = createTaskSchema.partial()
+/** Renaming an existing task number stays allowed; creating one does not. */
+export const updateTaskSchema = createTaskSchema.partial().extend({
+  id: taskNumber.optional(),
+})
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>
