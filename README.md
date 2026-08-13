@@ -78,6 +78,27 @@ OTP values are not stored directly: only keyed hashes are persisted. Codes are
 single-use, expire after 10 minutes, allow five attempts, have a 60-second
 resend cooldown, and are limited to five sends per email and purpose per hour.
 
+## Data model notes
+
+Tasks are numbered server-side from a per-tenant counter, so two people
+creating work at the same time cannot land on the same number. Task numbers are
+unique within an organization, never reused, and deleting a task soft-deletes
+it (`deletedAt`) so the record survives for audit.
+
+An assignee is stored twice on purpose: `assigneeId` is the authoritative
+reference and survives the user renaming themselves, while `taggedTo` keeps
+their email for display. Both are written together.
+
+Status text is stored as entered alongside a normalized `statusKey`, which is
+what "is this task still open" is queried by — an indexed equality test rather
+than a regular expression over display text. The status, label, and priority
+vocabularies are editable in the client, so they are constrained by shape
+rather than pinned to a fixed list.
+
+Audit entries in `admin_audit_logs` and `permission_audit_logs` are kept
+forever unless `AUDIT_RETENTION_DAYS` is set; see `.env.example` before
+enabling it, as it deletes irreversibly.
+
 ## Roles and module permissions
 
 The application currently has exactly two account types:
