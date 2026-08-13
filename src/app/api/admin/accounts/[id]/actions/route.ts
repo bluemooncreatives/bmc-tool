@@ -100,6 +100,7 @@ export async function POST(request: Request, { params }: RouteContext) {
               organizationName: organization.name,
               temporaryPassword,
               actorEmail: actor.email,
+              request,
             })
           } catch (error) {
             // eslint-disable-next-line no-console
@@ -173,6 +174,7 @@ export async function POST(request: Request, { params }: RouteContext) {
             temporaryPassword,
             roleLabel: ROLE_LABELS[primaryRole(target.role)],
             invitedByEmail: actor.email,
+            request,
           })
         } catch (error) {
           // eslint-disable-next-line no-console

@@ -148,6 +148,8 @@ export type CreateAccountInput = {
   adminNotes?: string
   /** When false the caller takes responsibility for delivering credentials. */
   sendInvite?: boolean
+  /** The request being handled, so the invite link points back to its origin. */
+  request?: Request
   /** Skips the domain allow-list. Only administrators creating accounts do. */
   bypassDomainPolicy?: boolean
 }
@@ -310,6 +312,7 @@ export async function createManagedAccount(
         temporaryPassword,
         roleLabel: ROLE_LABELS[input.role],
         invitedByEmail: input.actor.email,
+        request: input.request,
       })
     } catch (error) {
       // The account exists; surface the delivery failure without rolling back

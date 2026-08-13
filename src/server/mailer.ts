@@ -1,5 +1,5 @@
 import nodemailer, { type Transporter } from 'nodemailer'
-import { getAppUrl, getSmtpConfig, isProduction } from './env'
+import { getSmtpConfig, isProduction, resolveAppUrl } from './env'
 
 let transporter: Transporter | null = null
 
@@ -144,6 +144,8 @@ export type AccountInviteMail = {
   temporaryPassword: string
   roleLabel: string
   invitedByEmail: string
+  /** The request being handled, so the sign-in link points back to its origin. */
+  request?: Request
 }
 
 /**
@@ -158,7 +160,7 @@ export async function sendAccountInviteEmail(
 ): Promise<boolean> {
   const smtp = getSmtpConfig()
   const mailer = getTransporter()
-  const signInUrl = `${getAppUrl()}/sign-in`
+  const signInUrl = `${resolveAppUrl(input.request)}/sign-in`
 
   if (!smtp || !mailer) {
     if (isProduction) throw new Error('Email delivery is not configured.')
@@ -210,10 +212,12 @@ export async function sendPasswordResetByAdminEmail(input: {
   organizationName: string
   temporaryPassword: string
   actorEmail: string
+  /** The request being handled, so the sign-in link points back to its origin. */
+  request?: Request
 }): Promise<boolean> {
   const smtp = getSmtpConfig()
   const mailer = getTransporter()
-  const signInUrl = `${getAppUrl()}/sign-in`
+  const signInUrl = `${resolveAppUrl(input.request)}/sign-in`
 
   if (!smtp || !mailer) {
     if (isProduction) throw new Error('Email delivery is not configured.')

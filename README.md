@@ -59,6 +59,19 @@ verification after entering a valid password.
    already exists or no bootstrap password was set, use **Reset password** on
    the sign-in screen; the emailed OTP authorizes creation of a new password.
 
+Invite and password-reset emails contain an absolute **Sign in** link. The
+origin is taken from the request being handled, so the same build emails
+`localhost` links in development, preview links from a preview deployment, and
+production links from production, with no per-environment configuration.
+
+Because `Host` is caller-controlled, the request origin is only trusted when it
+matches a known origin: `APP_URL`, the Vercel-assigned hostnames, or anything in
+the comma-separated `APP_ORIGINS`. Add custom domains and staging aliases to
+`APP_ORIGINS`; unrecognised hosts fall back to `APP_URL` rather than putting an
+attacker-chosen domain in a real invite. Any localhost port is accepted in
+development only. Outside Vercel, production with no `APP_URL` fails the send
+with a named error instead of emailing a `localhost` link.
+
 In local development only, a missing `SMTP_PASSWORD` prints the OTP to the
 server console. Production refuses email delivery when SMTP is not configured.
 OTP values are not stored directly: only keyed hashes are persisted. Codes are

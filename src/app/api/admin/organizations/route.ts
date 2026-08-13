@@ -214,6 +214,7 @@ export async function POST(request: Request) {
           jobTitle: 'Organization Admin',
           sendInvite: input.admin.sendInvite,
           bypassDomainPolicy: true,
+          request,
         })
 
         await organizations.updateOne(

@@ -66,6 +66,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       // The administrator is created by the platform owner, so the tenant's own
       // domain allow-list does not apply to them.
       bypassDomainPolicy: true,
+      request,
     })
 
     if (body.data.makePrimaryAdmin) {

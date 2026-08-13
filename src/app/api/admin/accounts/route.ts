@@ -179,6 +179,7 @@ export async function POST(request: Request) {
       adminNotes: input.adminNotes,
       sendInvite: input.sendInvite,
       bypassDomainPolicy: true,
+      request,
     })
 
     await recordAdminAudit({
